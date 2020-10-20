@@ -1,18 +1,31 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
+import { ListProvider } from './tree';
+
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('catCoding.show', () => {
 			CatCodingPanel.createOrShow(context);
 		})
-	);
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('catCoding.openConvertPage', k => {
+      CatCodingPanel.createOrShow(context);
+    //   CatCodingPanel.currentPanel?.webview.postMessage()
+    })
+  );
+
+  vscode.window.registerTreeDataProvider(
+    `treeviewSample`,
+    new ListProvider(``)
+  );
 
 	if (vscode.window.registerWebviewPanelSerializer) {
 		// Make sure we register a serializer in activation event
 		vscode.window.registerWebviewPanelSerializer(CatCodingPanel.viewType, {
 			async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: any) {
-				console.log(`Got state: ${state}`);
 				CatCodingPanel.revive(webviewPanel, context.extensionUri, context.extensionPath);
 			}
 		});
@@ -170,7 +183,10 @@ class CatCodingPanel {
 								 style-src vscode-resource: 'unsafe-inline';">
 
 			<script>
-			  window.acquireVsCodeApi = acquireVsCodeApi;
+      window.addEventListener('message', event => {
+        const message = event.data; // The JSON data our extension sent
+        console.log(message);
+      });
 			</script>
 		</head>
 		<body>
@@ -180,13 +196,4 @@ class CatCodingPanel {
 		</body>
 		</html>`;
 	}
-}
-
-function getNonce() {
-	let text = '';
-	const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-	for (let i = 0; i < 32; i++) {
-		text += possible.charAt(Math.floor(Math.random() * possible.length));
-	}
-	return text;
 }

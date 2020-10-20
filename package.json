@@ -11,7 +11,8 @@
 	],
 	"activationEvents": [
 		"onCommand:catCoding.show",
-		"onWebviewPanel:catCoding"
+		"onWebviewPanel:catCoding",
+		"onView:treeviewSample"
 	],
 	"repository": {
 		"type": "git",
@@ -25,7 +26,26 @@
 				"title": "Start cat coding session",
 				"category": "Cat Coding"
 			}
-		]
+		],
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "treeview-sample",
+					"title": "Treeview Sample",
+					"icon": "src/coding.svg"
+				}
+			]
+		},
+		"views": {
+			"treeview-sample": [
+				{
+					"id": "treeviewSample",
+					"name": "Treeview Sample",
+					"icon": "src/coding.svg",
+					"contextualTitle": "List"
+				}
+			]
+		}
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
@@ -38,6 +58,7 @@
 		"lint": "eslint . --ext .ts,.tsx"
 	},
 	"dependencies": {
+		"got": "^11.7.0",
 		"react": "^16.14.0",
 		"react-dom": "^16.14.0"
 	},
