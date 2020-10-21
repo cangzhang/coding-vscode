@@ -3,6 +3,7 @@
 	"description": "Cat Coding - A Webview API Sample",
 	"version": "0.0.1",
 	"publisher": "cangzhang",
+	"license": "MIT",
 	"engines": {
 		"vscode": "^1.47.0"
 	},
@@ -58,9 +59,11 @@
 		"lint": "eslint . --ext .ts,.tsx"
 	},
 	"dependencies": {
+		"@risingstack/react-easy-state": "^6.3.0",
 		"got": "^11.7.0",
-		"react": "^16.14.0",
-		"react-dom": "^16.14.0"
+		"ky": "^0.24.0",
+		"react": "^17.0.0",
+		"react-dom": "^17.0.0"
 	},
 	"devDependencies": {
 		"@types/react": "^16.9.53",
