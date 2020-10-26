@@ -36,8 +36,8 @@ export class ListItem extends vscode.TreeItem {
   contextValue = `listItem`;
 
   iconPath = {
-    light: path.join(__filename, '..', '..', 'src', 'star.light.svg'),
-    dark: path.join(__filename, '..', '..', 'src', 'star.dark.svg'),
+    light: path.join(__filename, '../../src/assets/star.light.svg'),
+    dark: path.join(__filename, '../../src/assets/star.dark.svg'),
   }
 
   constructor(

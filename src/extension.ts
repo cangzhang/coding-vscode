@@ -1,9 +1,20 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
 
 import { ListProvider } from './tree';
+import Logger from './common/logger';
+import { uriHandler } from './codingServer';
+import { CodingAuthenticationProvider, onDidChangeSessions, ScopeList } from './coding'
+import { GitService } from './common/gitService';
 
-export function activate(context: vscode.ExtensionContext) {
+let team = `codingcorp`;
+
+export async function activate(context: vscode.ExtensionContext) {
+  const codingSrv = new CodingAuthenticationProvider(team);
+
+  context.subscriptions.push(vscode.window.registerUriHandler(uriHandler));
+
   context.subscriptions.push(
     vscode.commands.registerCommand('catCoding.show', () => {
       CatCodingPanel.createOrShow(context);
@@ -16,6 +27,57 @@ export function activate(context: vscode.ExtensionContext) {
       CatCodingPanel.currentPanel?.broadcast(`UPDATE_CURRENCY`, k);
     })
   );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('catCoding.login', async () => {
+      const session = await codingSrv.login(team);
+      if (!session.accessToken) {
+        console.error(`No token provided.`)
+      }
+
+      console.log(`session: `, session);
+    })
+  );
+
+  await codingSrv.initialize(context);
+
+  const gitSrv = await GitService.getBuiltInGitApi();
+  if (gitSrv) {
+    gitSrv.repositories.forEach(i => {
+      const data = fs.readFileSync(`${i.rootUri.path}/.git/config`, `utf8`);
+      console.log(data);
+    })
+  }
+
+  context.subscriptions.push(vscode.authentication.registerAuthenticationProvider({
+    id: 'coding',
+    label: 'Coding',
+    supportsMultipleAccounts: false,
+    onDidChangeSessions: onDidChangeSessions.event,
+    getSessions: () => Promise.resolve(codingSrv.sessions),
+    login: async (scopeList: string[] = ScopeList) => {
+      try {
+        const session = await codingSrv.login(team, scopeList.sort().join(' '));
+        Logger.info('Login success!');
+        onDidChangeSessions.fire({ added: [session.id], removed: [], changed: [] });
+        return session;
+      } catch (e) {
+        vscode.window.showErrorMessage(`Sign in failed: ${e}`);
+        Logger.error(e);
+        throw e;
+      }
+    },
+    logout: async (id: string) => {
+      try {
+        await codingSrv.logout(id);
+        onDidChangeSessions.fire({ added: [], removed: [id], changed: [] });
+      } catch (e) {
+        vscode.window.showErrorMessage(`Sign out failed: ${e}`);
+        Logger.error(e);
+        throw e;
+      }
+    }
+  }));
 
   vscode.window.registerTreeDataProvider(
     `treeviewSample`,
