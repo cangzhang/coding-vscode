@@ -2,8 +2,10 @@ import * as vscode from 'vscode';
 import { nanoid } from 'nanoid'
 import got from 'got';
 
-import { PromiseAdapter, promiseFromEvent, parseQuery } from './common/utils';
 import { AuthFailResult, AuthSuccessResult, UserResponse } from './typings/ResponseResult';
+import { PromiseAdapter, promiseFromEvent, parseQuery, parseCloneUrl } from './common/utils';
+import { GitService } from './common/gitService';
+import { RepoInfo } from './typings/types';
 
 const AUTH_SERVER = `http://127.0.0.1:5000`;
 const ClientId = `ff768664c96d04235b1cc4af1e3b37a8`;
@@ -22,6 +24,21 @@ const onDidManuallyProvideToken = new vscode.EventEmitter<string>();
 export class CodingServer {
   private _pendingStates = new Map<string, string[]>();
   private _codeExchangePromises = new Map<string, Promise<AuthSuccessResult>>();
+  private _accessToken: string = ``;
+  private _repo: RepoInfo = {
+    team: ``,
+    project: ``,
+    repo: ``,
+  };
+
+  constructor(sessions?: vscode.AuthenticationSession[], repo?: RepoInfo | null) {
+    if (sessions?.length) {
+      this._accessToken = sessions[sessions.length - 1].accessToken;
+    }
+    if (repo) {
+      this._repo = repo;
+    }
+  }
 
   public async login(team: string, scopes: string) {
     const state = nanoid();
@@ -31,7 +48,7 @@ export class CodingServer {
     const existingStates = this._pendingStates.get(scopes) || [];
     this._pendingStates.set(scopes, [...existingStates, state]);
 
-    const uri = vscode.Uri.parse(`${AUTH_SERVER}?callbackUri=${encodeURIComponent(callbackUri.toString())}&scope=${scopes}&state=${state}&responseType=code`);
+    const uri = vscode.Uri.parse(`${AUTH_SERVER}?callbackUri=${encodeURIComponent(callbackUri.toString())}&scope=${scopes}&state=${state}&responseType=code&team=${team}`);
     await vscode.env.openExternal(uri);
 
     let existingPromise = this._codeExchangePromises.get(scopes);
@@ -83,7 +100,7 @@ export class CodingServer {
     }
   };
 
-  public async getUserInfo(team: string, token: string) {
+  public async getUserInfo(team: string, token: string = this._accessToken) {
     try {
       const result: UserResponse = await got.get(`https://${team}.coding.net/api/me`, {
         searchParams: {
@@ -96,5 +113,40 @@ export class CodingServer {
     }
   }
 
+  public static async getRepoParams() {
+    const gitSrv = await GitService.getBuiltInGitApi();
+    // TODO: multiple working repos
+    const repoInstance = gitSrv?.repositories[0];
+
+    if (!repoInstance) {
+      return null;
+    }
+
+    const cloneUrl = await repoInstance.getConfig(`remote.origin.url`);
+    return parseCloneUrl(cloneUrl);
+  }
+
+  public async getMRList(
+    team: string = this._repo.team,
+    project: string = this._repo.project,
+    repo: string = this._repo.repo,
+  ) {
+    try {
+      const result = await got.get(`https://${team}.coding.net/api/user/${team}/project/${project}/depot/${repo}/git/merges/query`, {
+        searchParams: {
+          status: `all`,
+          sort: `action_at`,
+          page: 1,
+          PageSize: 15,
+          sortDirection: `DESC`,
+          access_token: this._accessToken,
+        }
+      }).json();
+
+      return result;
+    } catch (err) {
+      return err
+    }
+  }
 }
 

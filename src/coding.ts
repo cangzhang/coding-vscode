@@ -4,6 +4,7 @@ import { nanoid } from 'nanoid';
 import { keychain } from './common/keychain';
 import Logger from './common/logger'
 import { CodingServer } from './codingServer';
+import { RepoInfo } from './typings/types';
 
 interface SessionData {
   id: string;
@@ -30,10 +31,16 @@ export const onDidChangeSessions = new vscode.EventEmitter<vscode.Authentication
 export class CodingAuthenticationProvider {
   private _sessions: vscode.AuthenticationSession[] = [];
   private _codingServer = new CodingServer();
-  private _team: string;
+  private _repo: RepoInfo = {
+    team: ``,
+    project: ``,
+    repo: ``,
+  };
 
-  public constructor(team: string) {
-    this._team = team;
+  public constructor(repo: RepoInfo | null) {
+    if (repo) {
+      this._repo = repo;
+    }
   }
 
   public async initialize(context: vscode.ExtensionContext): Promise<void> {
@@ -47,45 +54,45 @@ export class CodingAuthenticationProvider {
   }
 
   private async _checkForUpdates() {
-		let storedSessions: vscode.AuthenticationSession[];
-		try {
-			storedSessions = await this._readSessions();
-		} catch (e) {
-			// Ignore, network request failed
-			return;
-		}
+    let storedSessions: vscode.AuthenticationSession[];
+    try {
+      storedSessions = await this._readSessions();
+    } catch (e) {
+      // Ignore, network request failed
+      return;
+    }
 
-		const added: string[] = [];
-		const removed: string[] = [];
+    const added: string[] = [];
+    const removed: string[] = [];
 
-		storedSessions.forEach(session => {
-			const matchesExisting = this._sessions.some(s => s.id === session.id);
-			// Another window added a session to the keychain, add it to our state as well
-			if (!matchesExisting) {
-				Logger.info('Adding session found in keychain');
-				this._sessions.push(session);
-				added.push(session.id);
-			}
-		});
+    storedSessions.forEach(session => {
+      const matchesExisting = this._sessions.some(s => s.id === session.id);
+      // Another window added a session to the keychain, add it to our state as well
+      if (!matchesExisting) {
+        Logger.info('Adding session found in keychain');
+        this._sessions.push(session);
+        added.push(session.id);
+      }
+    });
 
-		this._sessions.map(session => {
-			const matchesExisting = storedSessions.some(s => s.id === session.id);
-			// Another window has logged out, remove from our state
-			if (!matchesExisting) {
-				Logger.info('Removing session no longer found in keychain');
-				const sessionIndex = this._sessions.findIndex(s => s.id === session.id);
-				if (sessionIndex > -1) {
-					this._sessions.splice(sessionIndex, 1);
-				}
+    this._sessions.map(session => {
+      const matchesExisting = storedSessions.some(s => s.id === session.id);
+      // Another window has logged out, remove from our state
+      if (!matchesExisting) {
+        Logger.info('Removing session no longer found in keychain');
+        const sessionIndex = this._sessions.findIndex(s => s.id === session.id);
+        if (sessionIndex > -1) {
+          this._sessions.splice(sessionIndex, 1);
+        }
 
-				removed.push(session.id);
-			}
-		});
+        removed.push(session.id);
+      }
+    });
 
-		if (added.length || removed.length) {
-			onDidChangeSessions.fire({ added, removed, changed: [] });
-		}
-	}
+    if (added.length || removed.length) {
+      onDidChangeSessions.fire({ added, removed, changed: [] });
+    }
+  }
 
   private async _readSessions(): Promise<vscode.AuthenticationSession[]> {
     const storedSessions = await keychain.getToken() || await keychain.tryMigrate();
@@ -96,7 +103,7 @@ export class CodingAuthenticationProvider {
           const needsUserInfo = !session.account;
           let userInfo: { id: string, accountName: string };
           if (needsUserInfo) {
-            userInfo = await this._codingServer.getUserInfo(this._team, session.accessToken);
+            userInfo = await this._codingServer.getUserInfo(this._repo.team, session.accessToken);
           }
 
           return {
@@ -126,8 +133,8 @@ export class CodingAuthenticationProvider {
     return [];
   }
 
-  private async _tokenToSession(team: string, token: string, scopes: string[]): Promise<vscode.AuthenticationSession> {
-    const userInfo = await this._codingServer.getUserInfo(team, token);
+  private async _tokenToSession(token: string, scopes: string[]): Promise<vscode.AuthenticationSession> {
+    const userInfo = await this._codingServer.getUserInfo(this._repo.team, token);
 
     return {
       id: nanoid(),
@@ -142,7 +149,7 @@ export class CodingAuthenticationProvider {
 
   public async login(team: string, scopes: string = SCOPES): Promise<vscode.AuthenticationSession> {
     const { access_token: token } = await this._codingServer.login(team, scopes);
-    const session = await this._tokenToSession(team, token, scopes.split(' '));
+    const session = await this._tokenToSession(token, scopes.split(' '));
     await this._setToken(session);
     return session;
   }
@@ -163,16 +170,16 @@ export class CodingAuthenticationProvider {
   }
 
   // @ts-ignore
-	get sessions(): vscode.AuthenticationSession[] {
-		return this._sessions;
+  get sessions(): vscode.AuthenticationSession[] {
+    return this._sessions;
   }
-  
-  public async logout(id: string) {
-		const sessionIndex = this._sessions.findIndex(session => session.id === id);
-		if (sessionIndex > -1) {
-			this._sessions.splice(sessionIndex, 1);
-		}
 
-		await this._storeSessions();
-	}
+  public async logout(id: string) {
+    const sessionIndex = this._sessions.findIndex(session => session.id === id);
+    if (sessionIndex > -1) {
+      this._sessions.splice(sessionIndex, 1);
+    }
+
+    await this._storeSessions();
+  }
 }

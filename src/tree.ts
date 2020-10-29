@@ -2,8 +2,23 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import got from 'got';
 
+import { CodingServer } from './codingServer'
+import { RepoInfo } from './typings/types';
+
 export class ListProvider implements vscode.TreeDataProvider<ListItem> {
-  constructor(private workspaceRoot: string) { }
+  private _service: CodingServer;
+  private _repo: RepoInfo = {
+    team: ``,
+    project: ``,
+    repo: ``,
+  };
+
+  constructor(context: vscode.ExtensionContext, service: CodingServer, repo: RepoInfo | null) {
+    this._service = service;
+    if (repo) {
+      this._repo = repo;
+    }
+  }
 
   getTreeItem(element: ListItem): vscode.TreeItem {
     return element;
@@ -14,11 +29,16 @@ export class ListProvider implements vscode.TreeDataProvider<ListItem> {
       return Promise.resolve([]);
     }
 
+    this._service.getMRList()
+      .then(resp => {
+        console.log(resp);
+      })
+
     return got(`https://api.frankfurter.app/currencies`, { responseType: 'json' })
       .then(({ body }) => {
         return Object.entries(body as object).map(([k, v]) => {
           return new ListItem(k, v, vscode.TreeItemCollapsibleState.None, {
-            command: 'catCoding.openConvertPage',
+            command: 'codingPlugin.openConvertPage',
             title: `${k}: ${v}`,
             arguments: [k],
           })

@@ -1,6 +1,6 @@
 {
 	"name": "coding-plugin",
-	"description": "Cat Coding - A Webview API Sample",
+	"description": "Coding plugin for VS Code.",
 	"version": "0.0.1",
 	"publisher": "alcheung",
 	"license": "MIT",
@@ -12,9 +12,9 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:catCoding.show",
-		"onCommand:catCoding.login",
-		"onWebviewPanel:catCoding",
+		"onCommand:codingPlugin.show",
+		"onCommand:codingPlugin.login",
+		"onWebviewPanel:codingPlugin",
 		"onView:treeviewSample"
 	],
 	"repository": {
@@ -25,14 +25,14 @@
 	"contributes": {
 		"commands": [
 			{
-				"command": "catCoding.show",
-				"title": "Start cat coding session",
-				"category": "Cat Coding"
+				"command": "codingPlugin.show",
+				"title": "Start coding session",
+				"category": "Coding plugin"
 			},
 			{
-				"command": "catCoding.login",
+				"command": "codingPlugin.login",
 				"title": "Login coding.net",
-				"category": "Cat Coding"
+				"category": "Coding plugin"
 			}
 		],
 		"viewsContainers": {
