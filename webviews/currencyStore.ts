@@ -1,8 +1,8 @@
 import { store } from '@risingstack/react-easy-state';
 
 const currency = store({
-  currentCurrency: ``,
-  updateCurrentCurrency(k: string) {
+  currentCurrency: null,
+  updateCurrentCurrency(k: any) {
     currency.currentCurrency = k;
   }
 });

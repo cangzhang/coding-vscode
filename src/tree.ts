@@ -2,8 +2,9 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import got from 'got';
 
-import { CodingServer } from './codingServer'
-import { RepoInfo } from './typings/types';
+import { CodingServer } from './codingServer';
+import { RepoInfo } from './typings/commonTypes';
+import { MRData } from './typings/respResult';
 
 export class ListProvider implements vscode.TreeDataProvider<ListItem> {
   private _service: CodingServer;
@@ -29,25 +30,25 @@ export class ListProvider implements vscode.TreeDataProvider<ListItem> {
       return Promise.resolve([]);
     }
 
-    this._service.getMRList()
+    return this._service.getMRList()
       .then(resp => {
-        console.log(resp);
-      })
+        if (resp.code) {
+          return [];
+        }
 
-    return got(`https://api.frankfurter.app/currencies`, { responseType: 'json' })
-      .then(({ body }) => {
-        return Object.entries(body as object).map(([k, v]) => {
-          return new ListItem(k, v, vscode.TreeItemCollapsibleState.None, {
+        const { data: { list } } = resp;
+        return list.map((i: MRData) => {
+          return new ListItem(i.title, i.iid, vscode.TreeItemCollapsibleState.None, {
             command: 'codingPlugin.openConvertPage',
-            title: `${k}: ${v}`,
-            arguments: [k],
-          })
-        })
-      })
-      .catch(err => {
-        console.error(err);
-        vscode.window.showErrorMessage(`Fetch currency list failed.`);
-        return [];
+            title: `${i.iid} ${i.title}`,
+            arguments: [{
+              ...this._repo,
+              iid: i.iid,
+              type: `mr`,
+              accessToken: this._service.session.accessToken,
+            }],
+          });
+        });
       });
   }
 }
@@ -58,13 +59,13 @@ export class ListItem extends vscode.TreeItem {
   iconPath = {
     light: path.join(__filename, '../../src/assets/star.light.svg'),
     dark: path.join(__filename, '../../src/assets/star.dark.svg'),
-  }
+  };
 
   constructor(
     public readonly label: string,
-    public readonly value: string,
+    public readonly value: number,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-    public readonly command?: vscode.Command
+    public readonly command?: vscode.Command,
   ) {
     super(label, collapsibleState);
 

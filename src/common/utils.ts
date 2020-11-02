@@ -1,5 +1,5 @@
 import { Event, Disposable, Uri } from 'vscode';
-import { RepoInfo } from '../typings/types';
+import { RepoInfo } from '../typings/commonTypes';
 
 export interface PromiseAdapter<T, U> {
 	(

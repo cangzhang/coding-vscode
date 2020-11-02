@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
-import { nanoid } from 'nanoid'
+import { nanoid } from 'nanoid';
 import got from 'got';
 
-import { AuthFailResult, AuthSuccessResult, UserResponse } from './typings/ResponseResult';
+import { AuthFailResult, AuthSuccessResult, UserResponse } from './typings/respResult';
 import { PromiseAdapter, promiseFromEvent, parseQuery, parseCloneUrl } from './common/utils';
 import { GitService } from './common/gitService';
-import { RepoInfo } from './typings/types';
+import { RepoInfo, SessionData } from './typings/commonTypes';
 
 const AUTH_SERVER = `http://127.0.0.1:5000`;
 const ClientId = `ff768664c96d04235b1cc4af1e3b37a8`;
@@ -24,16 +24,18 @@ const onDidManuallyProvideToken = new vscode.EventEmitter<string>();
 export class CodingServer {
   private _pendingStates = new Map<string, string[]>();
   private _codeExchangePromises = new Map<string, Promise<AuthSuccessResult>>();
-  private _accessToken: string = ``;
+  private _session: SessionData = {} as SessionData;
   private _repo: RepoInfo = {
     team: ``,
     project: ``,
     repo: ``,
   };
+  private _loggedIn: boolean = false;
 
-  constructor(sessions?: vscode.AuthenticationSession[], repo?: RepoInfo | null) {
-    if (sessions?.length) {
-      this._accessToken = sessions[sessions.length - 1].accessToken;
+  constructor(session?: SessionData | null, repo?: RepoInfo | null) {
+    if (session) {
+      this._session = session;
+      this._loggedIn = true;
     }
     if (repo) {
       this._repo = repo;
@@ -86,11 +88,12 @@ export class CodingServer {
             client_id: ClientId,
             client_secret: ClientSecret,
             grant_type: `authorization_code`,
-          }
-        }
+          },
+        },
       ).json();
 
       if ((result as AuthFailResult).code) {
+        this._loggedIn = false;
         reject({} as AuthSuccessResult);
       } else {
         resolve(result as AuthSuccessResult);
@@ -100,12 +103,12 @@ export class CodingServer {
     }
   };
 
-  public async getUserInfo(team: string, token: string = this._accessToken) {
+  public async getUserInfo(team: string, token: string = this._session?.accessToken) {
     try {
-      const result: UserResponse = await got.get(`https://${team}.coding.net/api/me`, {
+      const result: UserResponse = await got.get(`https://${team}.coding.net/api/current_user`, {
         searchParams: {
           access_token: token,
-        }
+        },
       }).json();
       return result;
     } catch (err) {
@@ -137,16 +140,24 @@ export class CodingServer {
           status: `all`,
           sort: `action_at`,
           page: 1,
-          PageSize: 15,
+          PageSize: 20,
           sortDirection: `DESC`,
-          access_token: this._accessToken,
-        }
+          access_token: this._session.accessToken,
+        },
       }).json();
 
       return result;
     } catch (err) {
-      return err
+      return err;
     }
+  }
+
+  get loggedIn() {
+    return this._loggedIn;
+  }
+
+  get session() {
+    return this._session;
   }
 }
 

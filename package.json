@@ -4,7 +4,6 @@
 	"version": "0.0.1",
 	"publisher": "alcheung",
 	"license": "MIT",
-	"enableProposedApi": true,
 	"engines": {
 		"vscode": "^1.47.0"
 	},
@@ -34,13 +33,19 @@
 				"title": "Login coding.net",
 				"category": "Coding plugin"
 			}
-		],
+    ],
+    "viewsWelcome": [
+      {
+        "view": "treeviewSample",
+        "contents": "Please login first.\n[Login](command:codingPlugin.login)"
+      }
+    ],
 		"viewsContainers": {
 			"activitybar": [
 				{
 					"id": "treeview-sample",
 					"title": "Treeview Sample",
-					"icon": "src/assets/coding.svg"
+          "icon": "src/assets/coding.svg"
 				}
 			]
 		},

@@ -1,6 +1,8 @@
+import { TokenType } from './commonTypes';
+
 export interface AuthSuccessResult {
-  access_token: string;
-  refresh_token: string;
+  access_token: TokenType.AccessToken;
+  refresh_token: TokenType.RefreshToken;
   team: string;
   token_type: string;
   expires_in: string;
@@ -19,4 +21,10 @@ export interface UserResponse {
   name: string;
   path: string;
   team: string;
+}
+
+export interface MRData {
+  id: number;
+  iid: number;
+  title: string;
 }
