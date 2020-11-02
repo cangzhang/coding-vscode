@@ -7,7 +7,7 @@ import { PromiseAdapter, promiseFromEvent, parseQuery, parseCloneUrl } from './c
 import { GitService } from './common/gitService';
 import { RepoInfo, SessionData } from './typings/commonTypes';
 
-const AUTH_SERVER = `http://127.0.0.1:5000`;
+const AUTH_SERVER = `https://x5p7m.csb.app`;
 const ClientId = `ff768664c96d04235b1cc4af1e3b37a8`;
 const ClientSecret = `d29ebb32cab8b5f0a643b5da7dcad8d1469312c7`;
 
