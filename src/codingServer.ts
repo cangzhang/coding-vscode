@@ -117,16 +117,10 @@ export class CodingServer {
   }
 
   public static async getRepoParams() {
-    const gitSrv = await GitService.getBuiltInGitApi();
+    const urls = await GitService.getRemoteURLs();
     // TODO: multiple working repos
-    const repoInstance = gitSrv?.repositories[0];
-
-    if (!repoInstance) {
-      return null;
-    }
-
-    const cloneUrl = await repoInstance.getConfig(`remote.origin.url`);
-    return parseCloneUrl(cloneUrl);
+    const url = urls?.[0];
+    return parseCloneUrl(url || ``);
   }
 
   public async getMRList(

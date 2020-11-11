@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
 
-import Logger from './common/logger';
+// import Logger from './common/logger';
 import { uriHandler, CodingServer } from './codingServer';
-import { CodingAuthenticationProvider } from './coding'
+import { CodingAuthenticationProvider } from './coding';
 import { Panel } from './panel';
 import { ListProvider } from './tree';
 
 export async function activate(context: vscode.ExtensionContext) {
-  console.log(`actived`);
+  console.log(`activated`);
   const repoInfo = await CodingServer.getRepoParams();
   console.log(`repo `, repoInfo);
   const codingAuth = new CodingAuthenticationProvider(repoInfo);
@@ -19,30 +19,30 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('codingPlugin.show', () => {
       Panel.createOrShow(context);
-    })
+    }),
   );
 
   context.subscriptions.push(
     vscode.commands.registerCommand('codingPlugin.openConvertPage', k => {
       Panel.createOrShow(context);
       Panel.currentPanel?.broadcast(`UPDATE_CURRENCY`, k);
-    })
+    }),
   );
 
   context.subscriptions.push(
     vscode.commands.registerCommand('codingPlugin.login', async () => {
       const session = await codingAuth.login(repoInfo?.team || ``);
       if (!session?.accessToken) {
-        console.error(`No token provided.`)
+        console.error(`No token provided.`);
       }
 
       console.log(`session: `, session);
-    })
+    }),
   );
 
   vscode.window.registerTreeDataProvider(
     `treeviewSample`,
-    new ListProvider(context, service, repoInfo)
+    new ListProvider(context, service, repoInfo),
   );
 
   if (vscode.window.registerWebviewPanelSerializer) {
@@ -50,7 +50,7 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.window.registerWebviewPanelSerializer(Panel.viewType, {
       async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: any) {
         Panel.revive(webviewPanel, context.extensionUri, context.extensionPath);
-      }
+      },
     });
   }
 }
