@@ -2,7 +2,8 @@ import * as vscode from 'vscode';
 import { nanoid } from 'nanoid';
 import got from 'got';
 
-import { AuthFailResult, AuthSuccessResult, UserResponse } from './typings/respResult';
+import gotInstance from './common/request';
+import { AuthFailResult, AuthSuccessResult, CodingResponse, UserResponse } from './typings/respResult';
 import { PromiseAdapter, promiseFromEvent, parseQuery, parseCloneUrl } from './common/utils';
 import { GitService } from './common/gitService';
 import { RepoInfo, SessionData } from './typings/commonTypes';
@@ -105,14 +106,20 @@ export class CodingServer {
 
   public async getUserInfo(team: string, token: string = this._session?.accessToken) {
     try {
-      const result: UserResponse = await got.get(`https://${team}.coding.net/api/current_user`, {
+      const result: CodingResponse = await gotInstance.get(`https://${team}.coding.net/api/current_user`, {
         searchParams: {
           access_token: token,
         },
       }).json();
+
+      if (result.code) {
+        console.error(result.msg);
+        return Promise.reject(result.msg);
+      }
+
       return result;
     } catch (err) {
-      return err;
+      throw Error(err);
     }
   }
 

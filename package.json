@@ -32,6 +32,11 @@
         "command": "codingPlugin.login",
         "title": "Login coding.net",
         "category": "Coding plugin"
+      },
+      {
+        "command": "codingPlugin.logout",
+        "title": "Logout coding.net",
+        "category": "Coding plugin"
       }
     ],
     "viewsWelcome": [

@@ -7,42 +7,51 @@ import { Panel } from './panel';
 import { ListProvider } from './tree';
 
 export async function activate(context: vscode.ExtensionContext) {
-  console.log(`activated`);
   const repoInfo = await CodingServer.getRepoParams();
-  console.log(`repo `, repoInfo);
   const codingAuth = new CodingAuthenticationProvider(repoInfo);
   await codingAuth.initialize(context);
+
+  if (!codingAuth.session?.user) {
+    vscode.window.showWarningMessage(`Please login first.`);
+  }
+
   const service = new CodingServer(codingAuth.session, repoInfo);
 
   context.subscriptions.push(vscode.window.registerUriHandler(uriHandler));
-
   context.subscriptions.push(
     vscode.commands.registerCommand('codingPlugin.show', () => {
       Panel.createOrShow(context);
     }),
   );
-
   context.subscriptions.push(
     vscode.commands.registerCommand('codingPlugin.openConvertPage', k => {
       Panel.createOrShow(context);
       Panel.currentPanel?.broadcast(`UPDATE_CURRENCY`, k);
     }),
   );
-
   context.subscriptions.push(
     vscode.commands.registerCommand('codingPlugin.login', async () => {
       const session = await codingAuth.login(repoInfo?.team || ``);
       if (!session?.accessToken) {
         console.error(`No token provided.`);
       }
-
-      console.log(`session: `, session);
+    }),
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand('codingPlugin.logout', async () => {
+      try {
+        await codingAuth.logout();
+        vscode.window.showInformationMessage(`Logout successfully.`);
+      } catch {
+      }
     }),
   );
 
-  vscode.window.registerTreeDataProvider(
+  vscode.window.createTreeView(
     `treeviewSample`,
-    new ListProvider(context, service, repoInfo),
+    {
+      treeDataProvider: new ListProvider(context, service, repoInfo),
+    },
   );
 
   if (vscode.window.registerWebviewPanelSerializer) {

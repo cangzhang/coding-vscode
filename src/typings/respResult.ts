@@ -28,3 +28,9 @@ export interface MRData {
   iid: number;
   title: string;
 }
+
+export interface CodingResponse {
+  code: number,
+  data?: any,
+  msg?: string
+}

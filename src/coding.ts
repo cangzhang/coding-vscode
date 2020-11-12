@@ -62,9 +62,10 @@ export class CodingAuthenticationProvider {
     return null;
   }
 
-  public async getSessionData(accessToken: TokenType.AccessToken, refreshToken: TokenType.RefreshToken): Promise<SessionData | null> {
+  public async getSessionData(accessToken: TokenType.AccessToken, refreshToken: TokenType.RefreshToken): Promise<SessionData> {
     try {
-      const { data: userInfo } = await this._codingServer.getUserInfo(this._repo.team, accessToken);
+      const result = await this._codingServer.getUserInfo(this._repo.team, accessToken);
+      const { data: userInfo } = result;
       const ret: SessionData = {
         id: nanoid(),
         user: userInfo,
@@ -75,22 +76,39 @@ export class CodingAuthenticationProvider {
       vscode.window.showInformationMessage(`USER ${userInfo.name} @ TEAM ${userInfo.team}`);
       return ret;
     } catch (err) {
-      return null;
+      console.error(err);
+      throw new Error(err);
     }
   }
 
   public async login(team: string, scopes: string = SCOPES): Promise<SessionData | null> {
     const { access_token: accessToken, refresh_token: refreshToken } = await this._codingServer.login(team, scopes);
     if (accessToken && refreshToken) {
-      const session = await this.getSessionData(accessToken, refreshToken);
-      await Promise.all([
-        keychain.setToken(accessToken, TokenType.AccessToken),
-        keychain.setToken(refreshToken, TokenType.RefreshToken),
-      ]);
-      return session;
+      try {
+        const session = await this.getSessionData(accessToken, refreshToken);
+        await Promise.all([
+          keychain.setToken(accessToken, TokenType.AccessToken),
+          keychain.setToken(refreshToken, TokenType.RefreshToken),
+        ]);
+        return session;
+      } catch (e) {
+        throw new Error(e);
+      }
     }
 
     return null;
+  }
+
+  public async logout() {
+    try {
+      await Promise.all([
+        keychain.deleteToken(TokenType.AccessToken),
+        keychain.deleteToken(TokenType.RefreshToken),
+      ]);
+      return true;
+    } catch (e) {
+      throw Error(e)
+    }
   }
 
   get session() {
