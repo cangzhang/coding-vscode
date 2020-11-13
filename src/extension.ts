@@ -2,20 +2,20 @@ import * as vscode from 'vscode';
 
 // import Logger from './common/logger';
 import { uriHandler, CodingServer } from './codingServer';
-import { CodingAuthenticationProvider } from './coding';
 import { Panel } from './panel';
 import { ListProvider } from './tree';
 
 export async function activate(context: vscode.ExtensionContext) {
   const repoInfo = await CodingServer.getRepoParams();
-  const codingAuth = new CodingAuthenticationProvider(repoInfo);
+  const codingAuth = new CodingServer(repoInfo);
   await codingAuth.initialize(context);
 
   if (!codingAuth.session?.user) {
     vscode.window.showWarningMessage(`Please login first.`);
   }
 
-  const service = new CodingServer(codingAuth.session, repoInfo);
+  const treeDataProvider = new ListProvider(context, codingAuth, repoInfo);
+  vscode.window.registerTreeDataProvider(`treeViewSample`, treeDataProvider);
 
   context.subscriptions.push(vscode.window.registerUriHandler(uriHandler));
   context.subscriptions.push(
@@ -34,6 +34,8 @@ export async function activate(context: vscode.ExtensionContext) {
       const session = await codingAuth.login(repoInfo?.team || ``);
       if (!session?.accessToken) {
         console.error(`No token provided.`);
+      } else {
+        treeDataProvider.refresh();
       }
     }),
   );
@@ -42,16 +44,15 @@ export async function activate(context: vscode.ExtensionContext) {
       try {
         await codingAuth.logout();
         vscode.window.showInformationMessage(`Logout successfully.`);
-      } catch {
+      } finally {
+        treeDataProvider.refresh();
       }
     }),
   );
-
-  vscode.window.createTreeView(
-    `treeviewSample`,
-    {
-      treeDataProvider: new ListProvider(context, service, repoInfo),
-    },
+  context.subscriptions.push(
+    vscode.commands.registerCommand('codingPlugin.refresh', () => {
+      treeDataProvider.refresh();
+    }),
   );
 
   if (vscode.window.registerWebviewPanelSerializer) {

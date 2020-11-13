@@ -14,7 +14,7 @@
     "onCommand:codingPlugin.show",
     "onCommand:codingPlugin.login",
     "onWebviewPanel:codingPlugin",
-    "onView:treeviewSample"
+    "onView:treeViewSample"
   ],
   "repository": {
     "type": "git",
@@ -37,11 +37,28 @@
         "command": "codingPlugin.logout",
         "title": "Logout coding.net",
         "category": "Coding plugin"
+      },
+      {
+        "command": "codingPlugin.refresh",
+        "title": "Refresh",
+        "icon": {
+          "light": "src/assets/refresh.light.svg",
+          "dark": "src/assets//refresh.dark.svg"
+        }
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "codingPlugin.refresh",
+          "when": "view == treeViewSample",
+          "group": "navigation"
+        }
+      ]
+    },
     "viewsWelcome": [
       {
-        "view": "treeviewSample",
+        "view": "treeViewSample",
         "contents": "Please login first.\n[Login](command:codingPlugin.login)"
       }
     ],
@@ -57,7 +74,7 @@
     "views": {
       "treeview-sample": [
         {
-          "id": "treeviewSample",
+          "id": "treeViewSample",
           "name": "Treeview Sample",
           "icon": "src/assets/coding.svg",
           "contextualTitle": "List"

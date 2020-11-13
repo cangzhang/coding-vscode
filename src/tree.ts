@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import got from 'got';
 
 import { CodingServer } from './codingServer';
 import { RepoInfo } from './typings/commonTypes';
@@ -13,12 +12,18 @@ export class ListProvider implements vscode.TreeDataProvider<ListItem> {
     project: ``,
     repo: ``,
   };
+  private _onDidChangeTreeData: vscode.EventEmitter<ListItem | undefined | void> = new vscode.EventEmitter<ListItem | undefined | void>();
+  readonly onDidChangeTreeData: vscode.Event<ListItem | undefined | void> = this._onDidChangeTreeData.event;
 
   constructor(context: vscode.ExtensionContext, service: CodingServer, repo: RepoInfo | null) {
     this._service = service;
     if (repo) {
       this._repo = repo;
     }
+  }
+
+  public refresh(): any {
+    this._onDidChangeTreeData.fire();
   }
 
   getTreeItem(element: ListItem): vscode.TreeItem {
@@ -45,10 +50,13 @@ export class ListProvider implements vscode.TreeDataProvider<ListItem> {
               ...this._repo,
               iid: i.iid,
               type: `mr`,
-              accessToken: this._service.session.accessToken,
+              accessToken: this._service.session?.accessToken,
             }],
           });
         });
+      })
+      .catch(() => {
+        return Promise.resolve([]);
       });
   }
 }
