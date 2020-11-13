@@ -184,11 +184,13 @@ export class CodingServer {
         },
       }).json();
 
-      if (result.code) {
+      if (result.code || result.data.team !== team) {
         console.error(result.msg);
+        this._loggedIn = false;
         return Promise.reject(result.msg);
       }
 
+      this._loggedIn = true;
       return result;
     } catch (err) {
       throw Error(err);

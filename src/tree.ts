@@ -35,9 +35,16 @@ export class ListProvider implements vscode.TreeDataProvider<ListItem> {
       return Promise.resolve([]);
     }
 
+    if (!this._service.loggedIn) {
+      vscode.window.showErrorMessage(`[Auth] expired.`);
+      return Promise.resolve([]);
+    }
+
     return this._service.getMRList()
       .then(resp => {
         if (resp.code) {
+          const msg = Object.values(resp.msg as object)[0];
+          vscode.window.showErrorMessage(`[MR] list: ${msg}`);
           return [];
         }
 
