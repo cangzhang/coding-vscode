@@ -87,7 +87,7 @@ export class CodingServer {
         refreshToken,
       };
 
-      vscode.window.showInformationMessage(`USER ${userInfo.name} @ TEAM ${userInfo.team}`);
+      vscode.window.showInformationMessage(`Logged in as ${userInfo.name} @ ${userInfo.team}`);
       return ret;
     } catch (err) {
       console.error(err);
@@ -187,10 +187,12 @@ export class CodingServer {
       if (result.code || result.data.team !== team) {
         console.error(result.msg);
         this._loggedIn = false;
+        vscode.commands.executeCommand('setContext', 'loggedIn', this._loggedIn);
         return Promise.reject(result.msg);
       }
 
       this._loggedIn = true;
+      vscode.commands.executeCommand('setContext', 'loggedIn', this._loggedIn);
       return result;
     } catch (err) {
       throw Error(err);
@@ -242,6 +244,7 @@ export class CodingServer {
         keychain.deleteToken(TokenType.RefreshToken),
       ]);
       this._session = null;
+      vscode.commands.executeCommand('setContext', 'loggedIn', false);
       return true;
     } catch (e) {
       throw Error(e);

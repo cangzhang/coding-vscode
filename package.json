@@ -43,7 +43,7 @@
         "title": "Refresh",
         "icon": {
           "light": "src/assets/refresh.light.svg",
-          "dark": "src/assets//refresh.dark.svg"
+          "dark": "src/assets/refresh.dark.svg"
         }
       }
     ],
@@ -59,7 +59,13 @@
     "viewsWelcome": [
       {
         "view": "treeViewSample",
-        "contents": "Please login first.\n[Login](command:codingPlugin.login)"
+        "contents": "Please login first.\n[Login](command:codingPlugin.login)",
+        "when": "!loggedIn"
+      },
+      {
+        "view": "treeViewSample",
+        "contents": "No merge request for now.\n[Create Merge Request](command:codingPlugin.createMr)",
+        "when": "noMRResult && loggedIn"
       }
     ],
     "viewsContainers": {

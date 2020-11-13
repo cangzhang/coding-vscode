@@ -49,6 +49,12 @@ export class ListProvider implements vscode.TreeDataProvider<ListItem> {
         }
 
         const { data: { list } } = resp;
+        if (!list.length) {
+          vscode.commands.executeCommand('setContext', 'noMRResult', true);
+          return [];
+        }
+
+        vscode.commands.executeCommand('setContext', 'noMRResult', false);
         return list.map((i: MRData) => {
           return new ListItem(i.title, i.iid, vscode.TreeItemCollapsibleState.None, {
             command: 'codingPlugin.openConvertPage',
