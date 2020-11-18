@@ -1,7 +1,7 @@
 {
   "name": "coding-plugin",
   "description": "Coding plugin for VS Code.",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "publisher": "alcheung",
   "license": "MIT",
   "engines": {
@@ -13,19 +13,18 @@
   "activationEvents": [
     "onCommand:codingPlugin.show",
     "onCommand:codingPlugin.login",
-    "onWebviewPanel:codingPlugin",
     "onView:treeViewSample"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/microsoft/vscode-extension-samples.git"
+    "url": "https://github.com/cangzhang/coding-vscode.git"
   },
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "codingPlugin.show",
-        "title": "Start coding session",
+        "title": "Show coding tree",
         "category": "Coding plugin"
       },
       {
@@ -41,6 +40,7 @@
       {
         "command": "codingPlugin.refresh",
         "title": "Refresh",
+        "category": "Coding plugin",
         "icon": {
           "light": "src/assets/refresh.light.svg",
           "dark": "src/assets/refresh.dark.svg"

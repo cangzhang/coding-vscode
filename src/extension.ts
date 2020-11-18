@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 // import Logger from './common/logger';
 import { uriHandler, CodingServer } from './codingServer';
 import { Panel } from './panel';
-import { ListProvider } from './tree';
+import { ListItem, ListProvider } from './tree';
 
 export async function activate(context: vscode.ExtensionContext) {
   const repoInfo = await CodingServer.getRepoParams();
@@ -15,12 +15,13 @@ export async function activate(context: vscode.ExtensionContext) {
   }
 
   const treeDataProvider = new ListProvider(context, codingAuth, repoInfo);
-  vscode.window.registerTreeDataProvider(`treeViewSample`, treeDataProvider);
+  const tree = vscode.window.createTreeView(`treeViewSample`, { treeDataProvider });
 
   context.subscriptions.push(vscode.window.registerUriHandler(uriHandler));
   context.subscriptions.push(
     vscode.commands.registerCommand('codingPlugin.show', () => {
       Panel.createOrShow(context);
+      tree.reveal({} as ListItem);
     }),
   );
   context.subscriptions.push(
