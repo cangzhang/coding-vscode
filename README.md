@@ -1,6 +1,6 @@
 # Coding plugin for VS Code.
 
-## Running the example
+## Development
 
 - Open this example in VS Code 1.47+
 - `yarn install`

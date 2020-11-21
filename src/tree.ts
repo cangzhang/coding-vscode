@@ -6,20 +6,15 @@ import { RepoInfo } from './typings/commonTypes';
 import { MRData } from './typings/respResult';
 
 export class ListProvider implements vscode.TreeDataProvider<ListItem> {
-  private _service: CodingServer;
-  private _repo: RepoInfo = {
-    team: ``,
-    project: ``,
-    repo: ``,
-  };
   private _onDidChangeTreeData: vscode.EventEmitter<ListItem | undefined | void> = new vscode.EventEmitter<ListItem | undefined | void>();
   readonly onDidChangeTreeData: vscode.Event<ListItem | undefined | void> = this._onDidChangeTreeData.event;
 
-  constructor(context: vscode.ExtensionContext, service: CodingServer, repo: RepoInfo | null) {
+  private _context : vscode.ExtensionContext;
+  private _service: CodingServer;
+
+  constructor(context: vscode.ExtensionContext, service: CodingServer) {
+    this._context = context;
     this._service = service;
-    if (repo) {
-      this._repo = repo;
-    }
   }
 
   public refresh(): any {
@@ -40,6 +35,11 @@ export class ListProvider implements vscode.TreeDataProvider<ListItem> {
       return Promise.resolve([]);
     }
 
+    const repoInfo = this._context.workspaceState.get(`repoInfo`) as RepoInfo;
+    if (!repoInfo?.team) {
+      throw new Error(`team not exist`);
+    }
+
     return this._service.getMRList()
       .then(resp => {
         if (resp.code) {
@@ -55,12 +55,18 @@ export class ListProvider implements vscode.TreeDataProvider<ListItem> {
         }
 
         vscode.commands.executeCommand('setContext', 'noMRResult', false);
+        
+        const repoInfo = this._context.workspaceState.get(`repoInfo`) as RepoInfo;
+        if (!repoInfo?.team) {
+          throw new Error(`team not exist`);
+        }
+
         return list.map((i: MRData) => {
           return new ListItem(i.title, i.iid, vscode.TreeItemCollapsibleState.None, {
             command: 'codingPlugin.openConvertPage',
             title: `${i.iid} ${i.title}`,
             arguments: [{
-              ...this._repo,
+              ...repoInfo,
               iid: i.iid,
               type: `mr`,
               accessToken: this._service.session?.accessToken,

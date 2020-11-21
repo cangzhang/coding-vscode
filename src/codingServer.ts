@@ -36,17 +36,16 @@ const onDidManuallyProvideToken = new vscode.EventEmitter<string>();
 export class CodingServer {
   private _pendingStates = new Map<string, string[]>();
   private _codeExchangePromises = new Map<string, Promise<AuthSuccessResult>>();
-  private _repo: RepoInfo | undefined;
+
   private _loggedIn: boolean = false;
+  private _context: vscode.ExtensionContext;
   private _session: SessionData | null = null;
 
-  constructor(repo?: RepoInfo | null) {
-    if (repo) {
-      this._repo = repo;
-    }
+  constructor(context: vscode.ExtensionContext) {
+    this._context = context;
   }
 
-  public async initialize(context: vscode.ExtensionContext): Promise<void> {
+  public async initialize(): Promise<void> {
     try {
       this._session = await this._readSessions();
     } catch (e) {
@@ -78,7 +77,12 @@ export class CodingServer {
 
   public async getSessionData(accessToken: TokenType.AccessToken, refreshToken: TokenType.RefreshToken): Promise<SessionData> {
     try {
-      const result = await this.getUserInfo(this._repo?.team || ``, accessToken);
+      const repoInfo = this._context.workspaceState.get(`repoInfo`) as RepoInfo;
+      if (!repoInfo?.team) {
+        throw new Error(`team not exist`);
+      }
+
+      const result = await this.getUserInfo(repoInfo.team || ``, accessToken);
       const { data: userInfo } = result;
       const ret: SessionData = {
         id: nanoid(),
@@ -206,13 +210,14 @@ export class CodingServer {
     return parseCloneUrl(url || ``);
   }
 
-  public async getMRList(
-    team: string | undefined = this._repo?.team,
-    project: string | undefined = this._repo?.project,
-    repo: string | undefined = this._repo?.repo,
-  ) {
+  public async getMRList(repo?: string) {
     try {
-      const result = await got.get(`https://${team}.coding.net/api/user/${team}/project/${project}/depot/${repo}/git/merges/query`, {
+      const repoInfo = this._context.workspaceState.get(`repoInfo`) as RepoInfo;
+      if (!repoInfo?.team) {
+        throw new Error(`team not exist`);
+      }
+
+      const result = await got.get(`https://${repoInfo.team}.coding.net/api/user/${repoInfo.team}/project/${repoInfo.project}/depot/${repo || repoInfo.repo}/git/merges/query`, {
         searchParams: {
           status: `all`,
           sort: `action_at`,

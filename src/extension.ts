@@ -7,14 +7,23 @@ import { ListItem, ListProvider } from './tree';
 
 export async function activate(context: vscode.ExtensionContext) {
   const repoInfo = await CodingServer.getRepoParams();
-  const codingAuth = new CodingServer(repoInfo);
-  await codingAuth.initialize(context);
 
-  if (!codingAuth.session?.user) {
-    vscode.window.showWarningMessage(`Please login first.`);
+  if (!repoInfo?.team) {
+    vscode.window.showWarningMessage(`Please open a repo hosted by coding.net.`);
+  } else {
+    context.workspaceState.update(`repoInfo`, repoInfo);
   }
 
-  const treeDataProvider = new ListProvider(context, codingAuth, repoInfo);
+  const codingSrv = new CodingServer(context);
+  await codingSrv.initialize();
+
+  if (!codingSrv.session?.user) {
+    vscode.window.showWarningMessage(`Please login first.`);
+  } else {
+    context.workspaceState.update(`session`, codingSrv.session);
+  }
+
+  const treeDataProvider = new ListProvider(context, codingSrv);
   const tree = vscode.window.createTreeView(`treeViewSample`, { treeDataProvider });
 
   context.subscriptions.push(vscode.window.registerUriHandler(uriHandler));
@@ -32,7 +41,7 @@ export async function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(
     vscode.commands.registerCommand('codingPlugin.login', async () => {
-      const session = await codingAuth.login(repoInfo?.team || ``);
+      const session = await codingSrv.login(repoInfo?.team || ``);
       if (!session?.accessToken) {
         console.error(`No token provided.`);
       } else {
@@ -43,7 +52,7 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('codingPlugin.logout', async () => {
       try {
-        await codingAuth.logout();
+        await codingSrv.logout();
         vscode.window.showInformationMessage(`Logout successfully.`);
       } finally {
         treeDataProvider.refresh();
@@ -65,3 +74,5 @@ export async function activate(context: vscode.ExtensionContext) {
     });
   }
 }
+
+export function deactivate() {}
