@@ -99,7 +99,6 @@ export class CodingServer {
     }
   }
 
-
   public async startOAuth(team: string, scopes: string) {
     const state = nanoid();
     const { name, publisher } = require('../package.json');
@@ -210,27 +209,26 @@ export class CodingServer {
     return parseCloneUrl(url || ``);
   }
 
-  public async getMRList(repo?: string) {
+  public async getMRList(repo?: string, status?: string): Promise<CodingResponse> {
     try {
       const repoInfo = this._context.workspaceState.get(`repoInfo`) as RepoInfo;
       if (!repoInfo?.team) {
         throw new Error(`team not exist`);
       }
 
-      const result = await got.get(`https://${repoInfo.team}.coding.net/api/user/${repoInfo.team}/project/${repoInfo.project}/depot/${repo || repoInfo.repo}/git/merges/query`, {
+      const result: CodingResponse = await got.get(`https://${repoInfo.team}.coding.net/api/user/${repoInfo.team}/project/${repoInfo.project}/depot/${repo || repoInfo.repo}/git/merges/query`, {
         searchParams: {
-          status: `all`,
+          status,
           sort: `action_at`,
           page: 1,
-          PageSize: 20,
+          PageSize: 9999,
           sortDirection: `DESC`,
           access_token: this._session?.accessToken,
         },
       }).json();
-
       return result;
     } catch (err) {
-      return err;
+      return Promise.reject(err);
     }
   }
 

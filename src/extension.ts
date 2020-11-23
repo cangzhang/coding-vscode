@@ -34,7 +34,7 @@ export async function activate(context: vscode.ExtensionContext) {
     }),
   );
   context.subscriptions.push(
-    vscode.commands.registerCommand('codingPlugin.openConvertPage', k => {
+    vscode.commands.registerCommand('codingPlugin.showDetail', k => {
       Panel.createOrShow(context);
       Panel.currentPanel?.broadcast(`UPDATE_CURRENCY`, k);
     }),
@@ -64,6 +64,22 @@ export async function activate(context: vscode.ExtensionContext) {
       treeDataProvider.refresh();
     }),
   );
+  context.subscriptions.push(
+    vscode.commands.registerCommand('codingPlugin.switchRepo', async () => {
+      vscode.window.showQuickPick([
+        {
+          label: `1`,
+          description: `1`
+        },
+        {
+          label: `2`,
+          description: `2`
+        },
+      ]).then((selection) => {
+        console.log(selection)
+      })
+    }),
+  );
 
   if (vscode.window.registerWebviewPanelSerializer) {
     // Make sure we register a serializer in activation event
@@ -75,4 +91,4 @@ export async function activate(context: vscode.ExtensionContext) {
   }
 }
 
-export function deactivate() {}
+export function deactivate() { }

@@ -45,6 +45,11 @@
           "light": "src/assets/refresh.light.svg",
           "dark": "src/assets/refresh.dark.svg"
         }
+      },
+      {
+        "command": "codingPlugin.switchRepo",
+        "title": "Switch repo",
+        "category": "Coding plugin"
       }
     ],
     "menus": {
@@ -72,7 +77,7 @@
       "activitybar": [
         {
           "id": "treeview-sample",
-          "title": "Treeview Sample",
+          "title": "CODING Merge Requests",
           "icon": "src/assets/coding.svg"
         }
       ]
@@ -81,7 +86,7 @@
       "treeview-sample": [
         {
           "id": "treeViewSample",
-          "name": "Treeview Sample",
+          "name": "CODING Merge Requests",
           "icon": "src/assets/coding.svg",
           "contextualTitle": "List"
         }
