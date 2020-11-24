@@ -76,14 +76,14 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "treeview-sample",
-          "title": "CODING Merge Requests",
+          "id": "codingPluginTree",
+          "title": "CODING Merge Requests & Releases",
           "icon": "src/assets/coding.svg"
         }
       ]
     },
     "views": {
-      "treeview-sample": [
+      "codingPluginTree": [
         {
           "id": "mrTreeView",
           "name": "Merge Requests",
