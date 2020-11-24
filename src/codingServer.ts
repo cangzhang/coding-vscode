@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid';
 import got from 'got';
 
 import gotInstance from './common/request';
-import { AuthFailResult, AuthSuccessResult, CodingResponse } from './typings/respResult';
+import { AuthFailResult, AuthSuccessResult, CodingResponse, IRepoListResponse } from './typings/respResult';
 import { PromiseAdapter, promiseFromEvent, parseQuery, parseCloneUrl } from './common/utils';
 import { GitService } from './common/gitService';
 import { RepoInfo, SessionData, TokenType } from './typings/commonTypes';
@@ -227,6 +227,31 @@ export class CodingServer {
         },
       }).json();
       return result;
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  public async getRepoList() {
+    try {
+      const repoInfo = this._context.workspaceState.get(`repoInfo`) as RepoInfo;
+      if (!repoInfo?.team) {
+        throw new Error(`team not exist`);
+      }
+
+      const { code, data, msg }: IRepoListResponse = await got.get(`https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.global_key}/depots`, {
+        searchParams: {
+          access_token: this._session?.accessToken,
+        }
+      }).json();
+      if (code) {
+        return Promise.reject({ code, msg });
+      }
+
+      return {
+        code,
+        data: data.filter(i => i.vcsType === `git`),
+      };
     } catch (err) {
       return Promise.reject(err);
     }

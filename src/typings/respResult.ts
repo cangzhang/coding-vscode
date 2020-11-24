@@ -34,3 +34,16 @@ export interface CodingResponse {
   data?: any,
   msg?: string
 }
+
+export interface IRepoItem {
+  id: number;
+  name: string;
+  vcsType: 'git';
+  depotPath: string;
+  gitHttpsUrl: string;
+  gitSshUrl: string;
+}
+
+export interface IRepoListResponse extends CodingResponse {
+  data: IRepoItem[];
+}

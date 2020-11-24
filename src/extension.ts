@@ -5,6 +5,7 @@ import { uriHandler, CodingServer } from './codingServer';
 import { Panel } from './panel';
 import { ListItem, MRTreeDataProvider } from './tree/mr-tree';
 import { ReleaseTreeDataProvider } from './tree/release-tree';
+import { RepoInfo } from './typings/commonTypes';
 
 export async function activate(context: vscode.ExtensionContext) {
   const repoInfo = await CodingServer.getRepoParams();
@@ -24,15 +25,16 @@ export async function activate(context: vscode.ExtensionContext) {
     context.workspaceState.update(`session`, codingSrv.session);
   }
 
-  const treeDataProvider = new MRTreeDataProvider(context, codingSrv);
-  const tree = vscode.window.createTreeView(`mrTreeView`, { treeDataProvider });
-  vscode.window.registerTreeDataProvider(`releaseTreeView`, new ReleaseTreeDataProvider(context));
+  const mrDataProvider = new MRTreeDataProvider(context, codingSrv);
+  const releaseDataProvider = new ReleaseTreeDataProvider(context);
+  const mrTree = vscode.window.createTreeView(`mrTreeView`, { treeDataProvider: mrDataProvider });
+  const releaseTree = vscode.window.createTreeView(`releaseTreeView`, { treeDataProvider: releaseDataProvider });
 
   context.subscriptions.push(vscode.window.registerUriHandler(uriHandler));
   context.subscriptions.push(
     vscode.commands.registerCommand('codingPlugin.show', () => {
       Panel.createOrShow(context);
-      tree.reveal({} as ListItem);
+      mrTree.reveal({} as ListItem);
     }),
   );
   context.subscriptions.push(
@@ -47,7 +49,7 @@ export async function activate(context: vscode.ExtensionContext) {
       if (!session?.accessToken) {
         console.error(`No token provided.`);
       } else {
-        treeDataProvider.refresh();
+        mrDataProvider.refresh();
       }
     }),
   );
@@ -57,29 +59,40 @@ export async function activate(context: vscode.ExtensionContext) {
         await codingSrv.logout();
         vscode.window.showInformationMessage(`Logout successfully.`);
       } finally {
-        treeDataProvider.refresh();
+        mrDataProvider.refresh();
       }
     }),
   );
   context.subscriptions.push(
     vscode.commands.registerCommand('codingPlugin.refresh', () => {
-      treeDataProvider.refresh();
+      mrDataProvider.refresh();
     }),
   );
   context.subscriptions.push(
     vscode.commands.registerCommand('codingPlugin.switchRepo', async () => {
-      vscode.window.showQuickPick([
-        {
-          label: `1`,
-          description: `1`
-        },
-        {
-          label: `2`,
-          description: `2`
-        },
-      ]).then((selection) => {
-        console.log(selection)
-      })
+      try {
+        const { data } = await codingSrv.getRepoList();
+        const list = data.map(i => ({
+          label: i.name,
+          description: i.depotPath.replace(`/p/`, ``)
+            .replace(`/d/`, `/`)
+            .replace(`/git`, ``),
+        }));
+        const selection = await vscode.window.showQuickPick(list);
+        if (!selection)
+          return;
+
+        const r = context.workspaceState.get(`repoInfo`) as RepoInfo;
+        context.workspaceState.update(`repoInfo`, {
+          team: r?.team,
+          project: selection?.description.replace(`/${selection?.label}`, ``),
+          repo: selection?.label,
+        });
+        mrDataProvider.refresh();
+        releaseDataProvider.refresh();
+      } catch (e) {
+        vscode.window.showWarningMessage(`Repo list: fetch failed.`);
+      }
     }),
   );
 
@@ -93,4 +106,5 @@ export async function activate(context: vscode.ExtensionContext) {
   }
 }
 
-export function deactivate() { }
+export function deactivate() {
+}
