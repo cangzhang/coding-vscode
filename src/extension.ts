@@ -3,7 +3,8 @@ import * as vscode from 'vscode';
 // import Logger from './common/logger';
 import { uriHandler, CodingServer } from './codingServer';
 import { Panel } from './panel';
-import { ListItem, ListProvider } from './tree';
+import { ListItem, MRTreeDataProvider } from './tree/mr-tree';
+import { ReleaseTreeDataProvider } from './tree/release-tree';
 
 export async function activate(context: vscode.ExtensionContext) {
   const repoInfo = await CodingServer.getRepoParams();
@@ -23,8 +24,9 @@ export async function activate(context: vscode.ExtensionContext) {
     context.workspaceState.update(`session`, codingSrv.session);
   }
 
-  const treeDataProvider = new ListProvider(context, codingSrv);
-  const tree = vscode.window.createTreeView(`treeViewSample`, { treeDataProvider });
+  const treeDataProvider = new MRTreeDataProvider(context, codingSrv);
+  const tree = vscode.window.createTreeView(`mrTreeView`, { treeDataProvider });
+  vscode.window.registerTreeDataProvider(`releaseTreeView`, new ReleaseTreeDataProvider(context));
 
   context.subscriptions.push(vscode.window.registerUriHandler(uriHandler));
   context.subscriptions.push(

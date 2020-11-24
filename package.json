@@ -13,7 +13,7 @@
   "activationEvents": [
     "onCommand:codingPlugin.show",
     "onCommand:codingPlugin.login",
-    "onView:treeViewSample"
+    "onView:mrTreeView"
   ],
   "repository": {
     "type": "git",
@@ -56,19 +56,19 @@
       "view/title": [
         {
           "command": "codingPlugin.refresh",
-          "when": "view == treeViewSample",
+          "when": "view == mrTreeView",
           "group": "navigation"
         }
       ]
     },
     "viewsWelcome": [
       {
-        "view": "treeViewSample",
+        "view": "mrTreeView",
         "contents": "Please login first.\n[Login](command:codingPlugin.login)",
         "when": "!loggedIn"
       },
       {
-        "view": "treeViewSample",
+        "view": "mrTreeView",
         "contents": "No merge request for now.\n[Create Merge Request](command:codingPlugin.createMr)",
         "when": "noMRResult && loggedIn"
       }
@@ -85,8 +85,14 @@
     "views": {
       "treeview-sample": [
         {
-          "id": "treeViewSample",
-          "name": "CODING Merge Requests",
+          "id": "mrTreeView",
+          "name": "Merge Requests",
+          "icon": "src/assets/coding.svg",
+          "contextualTitle": "List"
+        },
+        {
+          "id": "releaseTreeView",
+          "name": "Releases",
           "icon": "src/assets/coding.svg",
           "contextualTitle": "List"
         }

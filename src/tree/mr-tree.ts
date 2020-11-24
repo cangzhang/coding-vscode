@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-import { CodingServer } from './codingServer';
-import { RepoInfo } from './typings/commonTypes';
-import { MRData } from './typings/respResult';
+import { CodingServer } from '../codingServer';
+import { RepoInfo } from '../typings/commonTypes';
+import { MRData } from '../typings/respResult';
 
 enum MRType {
   Open = `open`,
@@ -11,18 +11,12 @@ enum MRType {
   All = `all`,
 }
 
-enum FolderType {
-  MR = `mr`,
-  Release = `release`,
-}
-
 enum ItemType {
   ListItem = `listItem`,
-  FolderITem = `folderItem`,
   CategoryItem = `categoryItem`,
 }
 
-export class ListProvider implements vscode.TreeDataProvider<ListItem> {
+export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem> {
   private _onDidChangeTreeData: vscode.EventEmitter<ListItem | undefined | void> = new vscode.EventEmitter<ListItem | undefined | void>();
   readonly onDidChangeTreeData: vscode.Event<ListItem | undefined | void> = this._onDidChangeTreeData.event;
 
@@ -54,18 +48,6 @@ export class ListProvider implements vscode.TreeDataProvider<ListItem> {
     }
 
     if (element) {
-      if (element.contextValue === ItemType.FolderITem) {
-        if (element.value === FolderType.Release) {
-          return Promise.resolve([]);
-        }
-
-        return Promise.resolve([
-          new CategoryItem(MRType.Open.toUpperCase(), MRType.Open, vscode.TreeItemCollapsibleState.Collapsed),
-          new CategoryItem(MRType.Closed.toUpperCase(), MRType.Closed, vscode.TreeItemCollapsibleState.Collapsed),
-          new CategoryItem(MRType.All.toUpperCase(), MRType.All, vscode.TreeItemCollapsibleState.Collapsed),
-        ]);
-      }
-
       if (element.contextValue === ItemType.CategoryItem) {
         return this._service.getMRList(``, element.value as MRType)
           .then(resp => {
@@ -108,9 +90,10 @@ export class ListProvider implements vscode.TreeDataProvider<ListItem> {
       return Promise.resolve([]);
     }
 
-    return Promise.all([
-      new FolderItem(FolderType.MR.toUpperCase(), FolderType.MR, vscode.TreeItemCollapsibleState.Collapsed),
-      new FolderItem(FolderType.Release.toUpperCase(), FolderType.Release, vscode.TreeItemCollapsibleState.Collapsed),
+    return Promise.resolve([
+      new CategoryItem(MRType.Open.toUpperCase(), MRType.Open, vscode.TreeItemCollapsibleState.Collapsed),
+      new CategoryItem(MRType.Closed.toUpperCase(), MRType.Closed, vscode.TreeItemCollapsibleState.Collapsed),
+      new CategoryItem(MRType.All.toUpperCase(), MRType.All, vscode.TreeItemCollapsibleState.Collapsed),
     ]);
   }
 }
@@ -135,17 +118,13 @@ export class ListItem extends vscode.TreeItem {
   }
 }
 
-export class FolderItem extends ListItem {
-  contextValue = ItemType.FolderITem;
-}
-
 export class CategoryItem extends ListItem {
   contextValue = ItemType.CategoryItem;
 }
 
 export class MRItem extends ListItem {
   iconPath = {
-    light: path.join(__filename, '../../src/assets/star.light.svg'),
-    dark: path.join(__filename, '../../src/assets/star.dark.svg'),
+    light: path.join(__filename, '../../../src/assets/star.light.svg'),
+    dark: path.join(__filename, '../../../src/assets/star.dark.svg'),
   };
 }
