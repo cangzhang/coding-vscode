@@ -11,7 +11,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const repoInfo = await CodingServer.getRepoParams();
 
   if (!repoInfo?.team) {
-    vscode.window.showWarningMessage(`Please open a repo hosted by coding.net.`);
+    vscode.window.showInformationMessage(`Please open a repo hosted by coding.net.`);
   } else {
     context.workspaceState.update(`repoInfo`, repoInfo);
   }
@@ -22,13 +22,18 @@ export async function activate(context: vscode.ExtensionContext) {
   if (!codingSrv.session?.user) {
     vscode.window.showWarningMessage(`Please login first.`);
   } else {
-    context.workspaceState.update(`session`, codingSrv.session);
+    await context.workspaceState.update(`session`, codingSrv.session);
+    const rInfo = context.workspaceState.get(`repoInfo`, {});
+    await context.workspaceState.update(`repoInfo`, {
+      ...rInfo,
+      team: codingSrv.session.user.team,
+    });
   }
 
   const mrDataProvider = new MRTreeDataProvider(context, codingSrv);
   const releaseDataProvider = new ReleaseTreeDataProvider(context);
   const mrTree = vscode.window.createTreeView(`mrTreeView`, { treeDataProvider: mrDataProvider });
-  const releaseTree = vscode.window.createTreeView(`releaseTreeView`, { treeDataProvider: releaseDataProvider });
+  vscode.window.createTreeView(`releaseTreeView`, { treeDataProvider: releaseDataProvider });
 
   context.subscriptions.push(vscode.window.registerUriHandler(uriHandler));
   context.subscriptions.push(
@@ -45,7 +50,8 @@ export async function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(
     vscode.commands.registerCommand('codingPlugin.login', async () => {
-      const session = await codingSrv.login(repoInfo?.team || ``);
+      const rInfo = context.workspaceState.get(`repoInfo`, {}) as RepoInfo;
+      const session = await codingSrv.login(rInfo?.team || ``);
       if (!session?.accessToken) {
         console.error(`No token provided.`);
       } else {
@@ -82,7 +88,7 @@ export async function activate(context: vscode.ExtensionContext) {
         if (!selection)
           return;
 
-        const r = context.workspaceState.get(`repoInfo`) as RepoInfo;
+        const r = context.workspaceState.get(`repoInfo`, {}) as RepoInfo;
         context.workspaceState.update(`repoInfo`, {
           team: r?.team,
           project: selection?.description.replace(`/${selection?.label}`, ``),

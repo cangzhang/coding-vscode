@@ -77,7 +77,7 @@
       "activitybar": [
         {
           "id": "codingPluginTree",
-          "title": "CODING Merge Requests & Releases",
+          "title": "CODING",
           "icon": "src/assets/coding.svg"
         }
       ]

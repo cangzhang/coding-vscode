@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { nanoid } from 'nanoid';
 import got from 'got';
 
-import gotInstance from './common/request';
 import { AuthFailResult, AuthSuccessResult, CodingResponse, IRepoListResponse } from './typings/respResult';
 import { PromiseAdapter, promiseFromEvent, parseQuery, parseCloneUrl } from './common/utils';
 import { GitService } from './common/gitService';
@@ -181,13 +180,13 @@ export class CodingServer {
 
   public async getUserInfo(team: string, token: string = this._session?.accessToken || ``) {
     try {
-      const result: CodingResponse = await gotInstance.get(`https://${team}.coding.net/api/current_user`, {
+      const result: CodingResponse = await got.get(`https://codingcorp.coding.net/api/current_user`, {
         searchParams: {
           access_token: token,
         },
       }).json();
 
-      if (result.code || result.data.team !== team) {
+      if (result.code) {
         console.error(result.msg);
         this._loggedIn = false;
         vscode.commands.executeCommand('setContext', 'loggedIn', this._loggedIn);
