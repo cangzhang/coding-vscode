@@ -4,6 +4,7 @@ import * as path from 'path';
 import { CodingServer } from '../codingServer';
 import { RepoInfo } from '../typings/commonTypes';
 import { MRData } from '../typings/respResult';
+import { PromiseOnly } from 'got';
 
 enum MRType {
   Open = `open`,
@@ -14,6 +15,8 @@ enum MRType {
 enum ItemType {
   ListItem = `listItem`,
   CategoryItem = `categoryItem`,
+  MRItem = `mrItem`,
+  Node = `node`,
 }
 
 export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem> {
@@ -70,20 +73,33 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem> {
             }
 
             return list.map((i: MRData) => {
-              return new MRItem(i.title, i.iid, vscode.TreeItemCollapsibleState.None, {
-                command: 'codingPlugin.showDetail',
-                title: `${i.iid} ${i.title}`,
-                arguments: [{
-                  ...repoInfo,
-                  iid: i.iid,
-                  type: `mr`,
-                  accessToken: this._service.session?.accessToken,
-                }],
-              });
+              return new MRItem(
+                i.title,
+                i.iid,
+                vscode.TreeItemCollapsibleState.Collapsed,
+                {
+                  command: 'codingPlugin.showDetail',
+                  title: `${i.iid} ${i.title}`,
+                  arguments: [{
+                    ...repoInfo,
+                    iid: i.iid,
+                    type: `mr`,
+                    accessToken: this._service.session?.accessToken,
+                  }],
+                },
+              );
             });
           })
           .catch(() => {
             return [];
+          });
+      } else if (element.contextValue === ItemType.MRItem) {
+        return this._service.getMRDiff(element.value as number)
+          .then(({ data: { diffStat } }) => {
+            return [
+              new ListItem(`Description`, `mr-desc`, vscode.TreeItemCollapsibleState.None),
+              new NodeItem(`node`, `node`, vscode.TreeItemCollapsibleState.Expanded),
+            ];
           });
       }
 
@@ -123,8 +139,28 @@ export class CategoryItem extends ListItem {
 }
 
 export class MRItem extends ListItem {
+  contextValue = ItemType.MRItem;
+
   iconPath = {
     light: path.join(__filename, '../../../src/assets/star.light.svg'),
     dark: path.join(__filename, '../../../src/assets/star.dark.svg'),
   };
 }
+
+export class NodeItem extends ListItem {
+  contextValue = ItemType.Node;
+
+  children = [
+    new ListItem(`children-1`, 1, vscode.TreeItemCollapsibleState.None),
+  ];
+
+  async getChildren(): Promise<ListItem[]> {
+    return this.children;
+  }
+
+  getTreeItem(): vscode.TreeItem {
+    return this;
+  }
+}
+
+

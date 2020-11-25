@@ -2,7 +2,14 @@ import * as vscode from 'vscode';
 import { nanoid } from 'nanoid';
 import got from 'got';
 
-import { AuthFailResult, AuthSuccessResult, CodingResponse, IRepoListResponse } from './typings/respResult';
+import {
+  AuthFailResult,
+  AuthSuccessResult,
+  CodingResponse,
+  IRepoListResponse,
+  IMRDiffResponse,
+  IMRDetailResponse,
+} from './typings/respResult';
 import { PromiseAdapter, promiseFromEvent, parseQuery, parseCloneUrl } from './common/utils';
 import { GitService } from './common/gitService';
 import { RepoInfo, SessionData, TokenType } from './typings/commonTypes';
@@ -241,7 +248,7 @@ export class CodingServer {
       const { code, data, msg }: IRepoListResponse = await got.get(`https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.global_key}/depots`, {
         searchParams: {
           access_token: this._session?.accessToken,
-        }
+        },
       }).json();
       if (code) {
         return Promise.reject({ code, msg });
@@ -251,6 +258,48 @@ export class CodingServer {
         code,
         data: data.filter(i => i.vcsType === `git`),
       };
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  public async getMRDiff(iid: number) {
+    try {
+      const repoInfo = this._context.workspaceState.get(`repoInfo`) as RepoInfo;
+      if (!repoInfo?.team) {
+        throw new Error(`team not exist`);
+      }
+
+      const diff: IMRDiffResponse = await got.get(`https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.team}/project/${repoInfo.project}/depot/${repoInfo.repo}/git/merge/${iid}/diff`, {
+        searchParams: {
+          access_token: this._session?.accessToken,
+        },
+      }).json();
+      if (diff.code) {
+        return Promise.reject(diff);
+      }
+      return diff;
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  public async getMRDetail(iid: number) {
+    try {
+      const repoInfo = this._context.workspaceState.get(`repoInfo`) as RepoInfo;
+      if (!repoInfo?.team) {
+        throw new Error(`team not exist`);
+      }
+
+      const diff: IMRDetailResponse = await got.get(`https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.team}/project/${repoInfo.project}/depot/${repoInfo.repo}/git/merge/${iid}/detail`, {
+        searchParams: {
+          access_token: this._session?.accessToken,
+        },
+      }).json();
+      if (diff.code) {
+        return Promise.reject(diff);
+      }
+      return diff;
     } catch (err) {
       return Promise.reject(err);
     }

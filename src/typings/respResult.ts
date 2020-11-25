@@ -47,3 +47,77 @@ export interface IRepoItem {
 export interface IRepoListResponse extends CodingResponse {
   data: IRepoItem[];
 }
+
+export interface IMRPathItem {
+  changeType: string;
+  insertions: number;
+  deletions: number;
+  name: string;
+  path: string;
+  size: number;
+  mode: number;
+  objectId: string;
+  commitId: string;
+}
+
+export interface IMRDiffStat {
+  commitId: string;
+  oldSha: string;
+  newSha: string;
+  insertions: number;
+  deletions: number;
+  paths: IMRPathItem[];
+}
+
+export interface IMRDiffResponse extends CodingResponse {
+  data: {
+    isLarge: boolean;
+    diffStat: IMRDiffStat;
+  }
+}
+
+export interface IMRDetail {
+  merged_sha: string;
+  body: string;
+  body_plan: string;
+  source_sha: string;
+  target_sha: string;
+  base_sha: string;
+  id: number;
+  srcBranch: string;
+  desBranch: string;
+  title: string;
+  iid: number;
+  merge_status: string;
+  path: string;
+  created_at: number;
+  updated_at: number;
+  action_at: number;
+  granted: string;
+  comment_count: string;
+  reminded: string;
+  author: {
+    avatar: string;
+    name: string;
+    global_key: string;
+  };
+  action_author: {
+    avatar: string;
+    name: string;
+    global_key: string;
+  };
+  depot: {
+    id: number;
+    name: string;
+    isDefault: boolean;
+    projectId: number;
+    vcsType: string;
+  };
+}
+
+export interface IMRDetailResponse extends CodingResponse {
+  data: {
+    merge_request: IMRDetail;
+    can_merge: boolean;
+  }
+}
