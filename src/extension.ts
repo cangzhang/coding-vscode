@@ -35,14 +35,13 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const mrDataProvider = new MRTreeDataProvider(context, codingSrv);
   const releaseDataProvider = new ReleaseTreeDataProvider(context);
-  const mrTree = vscode.window.createTreeView(`mrTreeView`, { treeDataProvider: mrDataProvider });
+  vscode.window.createTreeView(`mrTreeView`, { treeDataProvider: mrDataProvider });
   vscode.window.createTreeView(`releaseTreeView`, { treeDataProvider: releaseDataProvider });
 
   context.subscriptions.push(vscode.window.registerUriHandler(uriHandler));
   context.subscriptions.push(
     vscode.commands.registerCommand('codingPlugin.show', () => {
       Panel.createOrShow(context);
-      mrTree.reveal({} as ListItem);
     }),
   );
   context.subscriptions.push(
