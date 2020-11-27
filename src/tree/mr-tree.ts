@@ -18,7 +18,12 @@ enum ItemType {
   Node = `node`,
 }
 
-type ITreeNode = string | number | IMRDiffStat | IMRPathItem;
+interface IFileNode extends IMRPathItem {
+  parentPath?: string;
+  children?: IFileNode[]
+}
+
+type ITreeNode = string | number | IMRDiffStat | IFileNode;
 
 export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITreeNode>> {
   private _onDidChangeTreeData: vscode.EventEmitter<ListItem<ITreeNode> | undefined | void> = new vscode.EventEmitter<ListItem<ITreeNode> | undefined | void>();
@@ -100,7 +105,6 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
             return (element as MRItem).getChildren(diffStat);
           });
       } else if (element.contextValue === ItemType.Node) {
-        (element as FileNode).makeTree();
         return (element as FileNode).getChildren();
       }
 
@@ -145,22 +149,65 @@ export class MRItem extends ListItem<string | number> {
   };
 
   async getChildren(diffStat: IMRDiffStat): Promise<ListItem<string | number | IFileNode>[]> {
-    const files = diffStat.paths.map(p => {
-      const pathArr = p.path.split(`/`);
-      const name = pathArr[0];
-      const childPath = pathArr.slice(1);
-      const expandStatus = childPath.length > 0 ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None;
-      return new FileNode(name, { ...p, name, childPath }, expandStatus);
-    });
+    const files = this._transformTree(diffStat.paths);
 
     return [
       new ListItem(`Description`, `mr-desc`, vscode.TreeItemCollapsibleState.None),
-      ...files,
+      ...files.map(f => new FileNode(f.name, f, (f.children || [])?.length > 0 ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None)),
     ];
   }
-}
 
-type IFileNode = IMRPathItem;
+  private _transformTree(paths: IMRPathItem[]) {
+    let nodes: IFileNode[] = [];
+    paths.forEach(p => {
+      nodes = this._makeTree(p, nodes);
+    });
+
+    return nodes;
+  }
+
+  private _makeTree(node: IFileNode, nodes: IFileNode[] = []) {
+    const rawArr = node.path.split(`/`);
+
+    rawArr.forEach((i, idx) => {
+      const curPath = rawArr.slice(0, idx + 1).join(`/`);
+      const parentPath = rawArr.slice(0, idx).join(`/`);
+      const f = { ...node, name: i, path: curPath, parentPath, children: [] };
+      nodes = this._insert(f, nodes);
+    });
+
+    return nodes;
+  }
+
+  private _insert(node: IFileNode, nodes: IFileNode[]) {
+    const hasSameRootNode = nodes.find(i => i.path === node.path);
+
+    for (const i of nodes) {
+      if (i.parentPath === node.parentPath) {
+        if (hasSameRootNode) {
+          break;
+        }
+
+        nodes = nodes.concat(node);
+      } else if (node.path === `${i.path}/${node.name}`) {
+        const existed = i.children?.find(i => i.path === node.path);
+        if (existed) {
+          break;
+        }
+
+        i.children = (i.children || []).concat(node);
+      } else {
+        i.children = this._insert(node, i.children || []);
+      }
+    }
+
+    if (!nodes.length && !node.parentPath) {
+      nodes = nodes.concat(node);
+    }
+
+    return nodes;
+  }
+}
 
 export class FileNode extends ListItem<IFileNode> {
   contextValue = ItemType.Node;
@@ -177,11 +224,13 @@ export class FileNode extends ListItem<IFileNode> {
 
   public makeTree() {
     if (this.collapsibleState === vscode.TreeItemCollapsibleState.None) {
-      return [];
+      return;
     }
+    this.children = (this.value.children || [])?.map(f => new FileNode(f.name, f, (f.children || [])?.length > 0 ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None));
   }
 
   async getChildren() {
+    this.makeTree();
     return this.children;
   }
 

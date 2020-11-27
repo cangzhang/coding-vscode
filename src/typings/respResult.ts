@@ -54,7 +54,6 @@ export interface IMRPathItem {
   deletions: number;
   name: string;
   path: string;
-  childPath: string[];
   size: number;
   mode: number;
   objectId: string;
