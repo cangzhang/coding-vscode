@@ -3,7 +3,7 @@ import * as path from 'path';
 
 import { CodingServer } from '../codingServer';
 import { RepoInfo } from '../typings/commonTypes';
-import { IMRDetail, IMRDiffStat, MRData, IMRPathItem } from '../typings/respResult';
+import { IMRDiffStat, MRData, IMRPathItem } from '../typings/respResult';
 
 enum MRType {
   Open = `open`,
@@ -61,7 +61,7 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
         return this._service.getMRList(``, element.value as MRType)
           .then(resp => {
             if (resp.code) {
-              const msg = Object.values(resp.msg || {} as object)[0];
+              const msg = Object.values(resp.msg || {})[0];
               vscode.window.showErrorMessage(`[MR] list: ${msg}`);
               return [];
             }
@@ -102,10 +102,10 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
       } else if (element.contextValue === ItemType.MRItem) {
         return this._service.getMRDiff(element.value as number)
           .then(({ data: { diffStat } }) => {
-            return (element as MRItem).getChildren(diffStat);
+            return element.getChildren(diffStat);
           });
       } else if (element.contextValue === ItemType.Node) {
-        return (element as FileNode).getChildren();
+        return element.getChildren();
       }
 
       return Promise.resolve([]);
