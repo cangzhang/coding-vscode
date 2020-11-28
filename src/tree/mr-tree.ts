@@ -199,10 +199,9 @@ export class MRItem extends ListItem<IMRData> {
   }
 
   private _insert(node: IFileNode, nodes: IFileNode[]) {
-    const hasSameRootNode = nodes.find(i => i.path === node.path);
-
     for (const i of nodes) {
       if (i.parentPath === node.parentPath) {
+        const hasSameRootNode = nodes.find(j => j.path === node.path);
         if (hasSameRootNode) {
           break;
         }
