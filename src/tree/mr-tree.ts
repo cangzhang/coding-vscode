@@ -18,7 +18,7 @@ enum ItemType {
   Node = `node`,
 }
 
-interface IFileNode extends IMRPathItem {
+export interface IFileNode extends IMRPathItem {
   parentPath?: string;
   children?: IFileNode[]
 }
@@ -163,15 +163,15 @@ export class MRItem extends ListItem<IMRData> {
         `mr-desc`,
         vscode.TreeItemCollapsibleState.None,
         {
-        command: 'codingPlugin.showDetail',
-        title: `${this.value.iid} ${this.value.title}`,
-        arguments: [{
-          ...repoInfo,
-          iid: this.value.iid,
-          type: `mr`,
-          accessToken: session?.accessToken,
-        }],
-      }),
+          command: 'codingPlugin.showDetail',
+          title: `${this.value.iid} ${this.value.title}`,
+          arguments: [{
+            ...repoInfo,
+            iid: this.value.iid,
+            type: `mr`,
+            accessToken: session?.accessToken,
+          }],
+        }),
       ...files.map(f => new FileNode(f.name, f, (f.children || [])?.length > 0 ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None)),
     ];
   }
@@ -201,8 +201,8 @@ export class MRItem extends ListItem<IMRData> {
   private _insert(node: IFileNode, nodes: IFileNode[]) {
     for (const i of nodes) {
       if (i.parentPath === node.parentPath) {
-        const hasSameRootNode = nodes.find(j => j.path === node.path);
-        if (hasSameRootNode) {
+        const hasSameParentNode = nodes.find(j => j.path === node.path);
+        if (hasSameParentNode) {
           break;
         }
 
@@ -235,9 +235,17 @@ export class FileNode extends ListItem<IFileNode> {
     public readonly label: string,
     public readonly value: IFileNode,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-    public readonly command?: vscode.Command,
   ) {
-    super(label, value, collapsibleState, command);
+    super(
+      label,
+      value,
+      collapsibleState,
+      collapsibleState === vscode.TreeItemCollapsibleState.None ? {
+        command: `codingPlugin.showDiff`,
+        title: ``,
+        arguments: [value]
+      } : undefined
+    );
   }
 
   public makeTree() {
