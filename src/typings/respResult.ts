@@ -23,7 +23,7 @@ export interface UserResponse {
   team: string;
 }
 
-export interface MRData {
+export interface IMRData {
   id: number;
   iid: number;
   title: string;

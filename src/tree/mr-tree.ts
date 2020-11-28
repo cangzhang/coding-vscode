@@ -2,8 +2,8 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 
 import {CodingServer} from '../codingServer';
-import {RepoInfo} from '../typings/commonTypes';
-import {IMRDiffStat, MRData, IMRPathItem} from '../typings/respResult';
+import {RepoInfo, SessionData} from '../typings/commonTypes';
+import {IMRDiffStat, IMRData, IMRPathItem} from '../typings/respResult';
 
 enum MRType {
   Open = `open`,
@@ -23,7 +23,7 @@ interface IFileNode extends IMRPathItem {
   children?: IFileNode[]
 }
 
-type ITreeNode = string | number | IMRDiffStat | IFileNode;
+type ITreeNode = string | number | IMRDiffStat | IFileNode | IMRData;
 
 export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITreeNode>> {
   private _onDidChangeTreeData: vscode.EventEmitter<ListItem<ITreeNode> | undefined | void> = new vscode.EventEmitter<ListItem<ITreeNode> | undefined | void>();
@@ -47,7 +47,7 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
 
   getChildren(element?: ListItem<ITreeNode>): Thenable<ListItem<ITreeNode>[]> {
     if (!this._service.loggedIn) {
-      vscode.window.showErrorMessage(`[Auth] expired.`);
+      vscode.window.showErrorMessage(`[MR Tree] auth expired.`);
       return Promise.resolve([]);
     }
 
@@ -86,21 +86,12 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
               throw new Error(`team not exist`);
             }
 
-            return list.map((i: MRData) => {
+            return list.map((i: IMRData) => {
               return new MRItem(
                 i.title,
-                i.iid,
+                i,
                 vscode.TreeItemCollapsibleState.Collapsed,
-                {
-                  command: 'codingPlugin.showDetail',
-                  title: `${i.iid} ${i.title}`,
-                  arguments: [{
-                    ...repoInfo,
-                    iid: i.iid,
-                    type: `mr`,
-                    accessToken: this._service.session?.accessToken,
-                  }],
-                },
+                this._context
               );
             });
           })
@@ -109,7 +100,7 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
           });
       }
       case ItemType.MRItem: {
-        return this._service.getMRDiff(element.value as number)
+        return this._service.getMRDiff((element.value as IMRData).iid)
           .then(({data: {diffStat}}) => {
             return element.getChildren(diffStat);
           });
@@ -144,7 +135,7 @@ export class CategoryItem extends ListItem<string> {
   contextValue = ItemType.CategoryItem;
 }
 
-export class MRItem extends ListItem<string | number> {
+export class MRItem extends ListItem<IMRData> {
   contextValue = ItemType.MRItem;
 
   iconPath = {
@@ -152,11 +143,35 @@ export class MRItem extends ListItem<string | number> {
     dark: path.join(__filename, '../../../src/assets/star.dark.svg'),
   };
 
+  constructor(
+    public readonly label: string,
+    public readonly value: IMRData,
+    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+    public readonly context: vscode.ExtensionContext,
+  ) {
+    super(label, value, collapsibleState);
+  }
+
   async getChildren(diffStat: IMRDiffStat): Promise<ListItem<string | number | IFileNode>[]> {
     const files = this._transformTree(diffStat.paths);
+    const repoInfo = this.context.workspaceState.get(`repoInfo`, {});
+    const session = this.context.workspaceState.get(`session`, {} as SessionData);
 
     return [
-      new ListItem(`Description`, `mr-desc`, vscode.TreeItemCollapsibleState.None),
+      new ListItem(
+        `Description`,
+        `mr-desc`,
+        vscode.TreeItemCollapsibleState.None,
+        {
+        command: 'codingPlugin.showDetail',
+        title: `${this.value.iid} ${this.value.title}`,
+        arguments: [{
+          ...repoInfo,
+          iid: this.value.iid,
+          type: `mr`,
+          accessToken: session?.accessToken,
+        }],
+      }),
       ...files.map(f => new FileNode(f.name, f, (f.children || [])?.length > 0 ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None)),
     ];
   }
