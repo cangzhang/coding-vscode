@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-import { CodingServer } from '../codingServer';
-import { RepoInfo } from '../typings/commonTypes';
-import { IMRDiffStat, MRData, IMRPathItem } from '../typings/respResult';
+import {CodingServer} from '../codingServer';
+import {RepoInfo} from '../typings/commonTypes';
+import {IMRDiffStat, MRData, IMRPathItem} from '../typings/respResult';
 
 enum MRType {
   Open = `open`,
@@ -56,8 +56,16 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
       throw new Error(`team not exist.`);
     }
 
-    if (element) {
-      if (element.contextValue === ItemType.CategoryItem) {
+    if (!element) {
+      return Promise.resolve([
+        new CategoryItem(MRType.Open.toUpperCase(), MRType.Open, vscode.TreeItemCollapsibleState.Collapsed),
+        new CategoryItem(MRType.Closed.toUpperCase(), MRType.Closed, vscode.TreeItemCollapsibleState.Collapsed),
+        new CategoryItem(MRType.All.toUpperCase(), MRType.All, vscode.TreeItemCollapsibleState.Collapsed),
+      ]);
+    }
+
+    switch (element.contextValue) {
+      case ItemType.CategoryItem: {
         return this._service.getMRList(``, element.value as MRType)
           .then(resp => {
             if (resp.code) {
@@ -66,7 +74,7 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
               return [];
             }
 
-            const { data: { list } } = resp;
+            const {data: {list}} = resp;
             if (!list.length) {
               return [
                 new ListItem(`0 merge requests in this category`, `noData`, vscode.TreeItemCollapsibleState.None),
@@ -99,23 +107,19 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
           .catch(() => {
             return [];
           });
-      } else if (element.contextValue === ItemType.MRItem) {
+      }
+      case ItemType.MRItem: {
         return this._service.getMRDiff(element.value as number)
-          .then(({ data: { diffStat } }) => {
+          .then(({data: {diffStat}}) => {
             return element.getChildren(diffStat);
           });
-      } else if (element.contextValue === ItemType.Node) {
+      }
+      case ItemType.Node: {
         return element.getChildren();
       }
-
-      return Promise.resolve([]);
+      default:
+        return Promise.resolve([]);
     }
-
-    return Promise.resolve([
-      new CategoryItem(MRType.Open.toUpperCase(), MRType.Open, vscode.TreeItemCollapsibleState.Collapsed),
-      new CategoryItem(MRType.Closed.toUpperCase(), MRType.Closed, vscode.TreeItemCollapsibleState.Collapsed),
-      new CategoryItem(MRType.All.toUpperCase(), MRType.All, vscode.TreeItemCollapsibleState.Collapsed),
-    ]);
   }
 }
 
@@ -172,7 +176,7 @@ export class MRItem extends ListItem<string | number> {
     rawArr.forEach((i, idx) => {
       const curPath = rawArr.slice(0, idx + 1).join(`/`);
       const parentPath = rawArr.slice(0, idx).join(`/`);
-      const f = { ...node, name: i, path: curPath, parentPath, children: [] };
+      const f = {...node, name: i, path: curPath, parentPath, children: []};
       nodes = this._insert(f, nodes);
     });
 
