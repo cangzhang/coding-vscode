@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
 
 // import Logger from './common/logger';
-import {uriHandler, CodingServer} from './codingServer';
-import {Panel} from './panel';
-import {IFileNode, MRTreeDataProvider} from './tree/mr-tree';
-import {ReleaseTreeDataProvider} from './tree/release-tree';
-import {RepoInfo} from './typings/commonTypes';
+import { uriHandler, CodingServer } from './codingServer';
+import { Panel } from './panel';
+import { IFileNode, MRTreeDataProvider } from './tree/mr-tree';
+import { ReleaseTreeDataProvider } from './tree/release-tree';
+import { RepoInfo } from './typings/commonTypes';
 
 export async function activate(context: vscode.ExtensionContext) {
   const repoInfo = await CodingServer.getRepoParams();
@@ -35,8 +35,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const mrDataProvider = new MRTreeDataProvider(context, codingSrv);
   const releaseDataProvider = new ReleaseTreeDataProvider(context);
-  vscode.window.createTreeView(`mrTreeView`, {treeDataProvider: mrDataProvider, showCollapseAll: true});
-  vscode.window.createTreeView(`releaseTreeView`, {treeDataProvider: releaseDataProvider, showCollapseAll: true});
+  vscode.window.createTreeView(`mrTreeView`, { treeDataProvider: mrDataProvider, showCollapseAll: true });
+  vscode.window.createTreeView(`releaseTreeView`, { treeDataProvider: releaseDataProvider, showCollapseAll: true });
 
   context.subscriptions.push(vscode.window.registerUriHandler(uriHandler));
   context.subscriptions.push(
@@ -79,7 +79,7 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('codingPlugin.switchRepo', async () => {
       try {
-        const {data} = await codingSrv.getRepoList();
+        const { data } = await codingSrv.getRepoList();
         const list = data.map(i => ({
           label: i.name,
           description: i.depotPath.replace(`/p/`, ``)
@@ -105,7 +105,8 @@ export async function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(
     vscode.commands.registerCommand(`codingPlugin.showDiff`, async (file: IFileNode) => {
-      await vscode.commands.executeCommand(`vscode.diff`, vscode.Uri);
+      console.log(context.storageUri, context.globalStorageUri, file);
+      // await vscode.commands.executeCommand(`vscode.diff`, vscode.Uri);
     }),
   );
 
@@ -119,4 +120,5 @@ export async function activate(context: vscode.ExtensionContext) {
   }
 }
 
-export function deactivate() {}
+export function deactivate() {
+}

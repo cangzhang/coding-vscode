@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-import {CodingServer} from '../codingServer';
-import {RepoInfo, SessionData} from '../typings/commonTypes';
-import {IMRDiffStat, IMRData, IMRPathItem} from '../typings/respResult';
+import { CodingServer } from '../codingServer';
+import { RepoInfo, SessionData } from '../typings/commonTypes';
+import { IMRDiffStat, IMRData, IMRPathItem } from '../typings/respResult';
 
 enum MRType {
   Open = `open`,
@@ -21,6 +21,8 @@ enum ItemType {
 export interface IFileNode extends IMRPathItem {
   parentPath?: string;
   children?: IFileNode[]
+  newSha?: string;
+  oldSha?: string;
 }
 
 type ITreeNode = string | number | IMRDiffStat | IFileNode | IMRData;
@@ -74,7 +76,7 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
               return [];
             }
 
-            const {data: {list}} = resp;
+            const { data: { list } } = resp;
             if (!list.length) {
               return [
                 new ListItem(`0 merge requests in this category`, `noData`, vscode.TreeItemCollapsibleState.None),
@@ -91,7 +93,7 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
                 i.title,
                 i,
                 vscode.TreeItemCollapsibleState.Collapsed,
-                this._context
+                this._context,
               );
             });
           })
@@ -101,7 +103,7 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
       }
       case ItemType.MRItem: {
         return this._service.getMRDiff((element.value as IMRData).iid)
-          .then(({data: {diffStat}}) => {
+          .then(({ data: { diffStat } }) => {
             return element.getChildren(diffStat);
           });
       }
@@ -153,7 +155,7 @@ export class MRItem extends ListItem<IMRData> {
   }
 
   async getChildren(diffStat: IMRDiffStat): Promise<ListItem<string | number | IFileNode>[]> {
-    const files = this._transformTree(diffStat.paths);
+    const files = this._transformTree(diffStat);
     const repoInfo = this.context.workspaceState.get(`repoInfo`, {});
     const session = this.context.workspaceState.get(`session`, {} as SessionData);
 
@@ -176,10 +178,10 @@ export class MRItem extends ListItem<IMRData> {
     ];
   }
 
-  private _transformTree(paths: IMRPathItem[]) {
+  private _transformTree(diff: IMRDiffStat) {
     let nodes: IFileNode[] = [];
-    paths.forEach(p => {
-      nodes = this._makeTree(p, nodes);
+    diff.paths.forEach(p => {
+      nodes = this._makeTree({ ...p, newSha: diff.newSha, oldSha: diff.oldSha }, nodes);
     });
 
     return nodes;
@@ -191,7 +193,7 @@ export class MRItem extends ListItem<IMRData> {
     rawArr.forEach((i, idx) => {
       const curPath = rawArr.slice(0, idx + 1).join(`/`);
       const parentPath = rawArr.slice(0, idx).join(`/`);
-      const f = {...node, name: i, path: curPath, parentPath, children: []};
+      const f = { ...node, name: i, path: curPath, parentPath, children: [] };
       nodes = this._insert(f, nodes);
     });
 
@@ -243,8 +245,8 @@ export class FileNode extends ListItem<IFileNode> {
       collapsibleState === vscode.TreeItemCollapsibleState.None ? {
         command: `codingPlugin.showDiff`,
         title: ``,
-        arguments: [value]
-      } : undefined
+        arguments: [value],
+      } : undefined,
     );
   }
 
