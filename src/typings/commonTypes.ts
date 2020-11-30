@@ -11,7 +11,7 @@ export enum TokenType {
   RefreshToken = `refreshToken` ,
 }
 
-export interface SessionData {
+export interface ISessionData {
   id: string;
   user: UserResponse | null;
   accessToken: string;

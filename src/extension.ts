@@ -1,10 +1,11 @@
 import * as vscode from 'vscode';
+import got from 'got';
 
 // import Logger from './common/logger';
 import { uriHandler, CodingServer } from './codingServer';
 import { Panel } from './panel';
-import { IFileNode, MRTreeDataProvider } from './tree/mr-tree';
-import { ReleaseTreeDataProvider } from './tree/release-tree';
+import { IFileNode, MRTreeDataProvider } from './tree/mrTree';
+import { ReleaseTreeDataProvider } from './tree/releaseTree';
 import { RepoInfo } from './typings/commonTypes';
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -105,8 +106,9 @@ export async function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(
     vscode.commands.registerCommand(`codingPlugin.showDiff`, async (file: IFileNode) => {
-      console.log(context.storageUri, context.globalStorageUri, file);
-      // await vscode.commands.executeCommand(`vscode.diff`, vscode.Uri);
+      const newFileUri = vscode.Uri.parse(file.path, false).with({ scheme: `mr`, query: `commit=${file.newSha}&path=${file.path}` });
+      const oldFileUri = newFileUri.with({ query: `commit=${file.oldSha}&path=${file.path}`});
+      await vscode.commands.executeCommand(`vscode.diff`, oldFileUri, newFileUri, `${file.name} (Merge Request)`, { preserveFocus: true });
     }),
   );
 

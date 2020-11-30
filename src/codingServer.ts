@@ -12,7 +12,7 @@ import {
 } from './typings/respResult';
 import { PromiseAdapter, promiseFromEvent, parseQuery, parseCloneUrl } from './common/utils';
 import { GitService } from './common/gitService';
-import { RepoInfo, SessionData, TokenType } from './typings/commonTypes';
+import { RepoInfo, ISessionData, TokenType } from './typings/commonTypes';
 import { keychain } from './common/keychain';
 import Logger from './common/logger';
 
@@ -45,7 +45,7 @@ export class CodingServer {
 
   private _loggedIn: boolean = false;
   private _context: vscode.ExtensionContext;
-  private _session: SessionData | null = null;
+  private _session: ISessionData | null = null;
 
   constructor(context: vscode.ExtensionContext) {
     this._context = context;
@@ -59,7 +59,7 @@ export class CodingServer {
     }
   }
 
-  private async _readSessions(): Promise<SessionData | null> {
+  private async _readSessions(): Promise<ISessionData | null> {
     const [accessToken, refreshToken] = await Promise.all([
       keychain.getToken(TokenType.AccessToken),
       keychain.getToken(TokenType.RefreshToken),
@@ -81,7 +81,7 @@ export class CodingServer {
     return null;
   }
 
-  public async getSessionData(accessToken: TokenType.AccessToken, refreshToken: TokenType.RefreshToken): Promise<SessionData> {
+  public async getSessionData(accessToken: TokenType.AccessToken, refreshToken: TokenType.RefreshToken): Promise<ISessionData> {
     try {
       const repoInfo = this._context.workspaceState.get(`repoInfo`) as RepoInfo;
       if (!repoInfo?.team) {
@@ -90,7 +90,7 @@ export class CodingServer {
 
       const result = await this.getUserInfo(repoInfo.team || ``, accessToken);
       const { data: userInfo } = result;
-      const ret: SessionData = {
+      const ret: ISessionData = {
         id: nanoid(),
         user: userInfo,
         accessToken,
@@ -131,7 +131,7 @@ export class CodingServer {
     });
   }
 
-  public async login(team: string, scopes: string = SCOPES): Promise<SessionData | null> {
+  public async login(team: string, scopes: string = SCOPES): Promise<ISessionData | null> {
     const { access_token: accessToken, refresh_token: refreshToken } = await this.startOAuth(team, scopes);
     if (accessToken && refreshToken) {
       try {
@@ -302,6 +302,25 @@ export class CodingServer {
       return diff;
     } catch (err) {
       return Promise.reject(err);
+    }
+  }
+
+  public async getRemoteFileContent(path: string) {
+    try {
+      const repoInfo = this._context.workspaceState.get(`repoInfo`) as RepoInfo;
+      if (!repoInfo?.team) {
+        throw new Error(`team not exist`);
+      }
+
+      const { body } = await got.get(`https://${repoInfo.team}.coding.net/p/${repoInfo.project}/d/${repoInfo.repo}/git/raw/${path}`, {
+        searchParams: {
+          access_token: this._session?.accessToken,
+        },
+      });
+
+      return body;
+    } catch (err) {
+      return ``;
     }
   }
 

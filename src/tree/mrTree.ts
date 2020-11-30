@@ -2,8 +2,10 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 
 import { CodingServer } from '../codingServer';
-import { RepoInfo, SessionData } from '../typings/commonTypes';
+import { RepoInfo, ISessionData } from '../typings/commonTypes';
 import { IMRDiffStat, IMRData, IMRPathItem } from '../typings/respResult';
+
+import { getInMemMRContentProvider } from './inMemMRContentProvider'
 
 enum MRType {
   Open = `open`,
@@ -30,6 +32,7 @@ type ITreeNode = string | number | IMRDiffStat | IFileNode | IMRData;
 export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITreeNode>> {
   private _onDidChangeTreeData: vscode.EventEmitter<ListItem<ITreeNode> | undefined | void> = new vscode.EventEmitter<ListItem<ITreeNode> | undefined | void>();
   readonly onDidChangeTreeData: vscode.Event<ListItem<ITreeNode> | undefined | void> = this._onDidChangeTreeData.event;
+  private _disposables: vscode.Disposable[];
 
   private _context: vscode.ExtensionContext;
   private _service: CodingServer;
@@ -37,6 +40,9 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
   constructor(context: vscode.ExtensionContext, service: CodingServer) {
     this._context = context;
     this._service = service;
+
+    this._disposables = [];
+    this._disposables.push(vscode.workspace.registerTextDocumentContentProvider('mr', getInMemMRContentProvider(context, this._service)));
   }
 
   public refresh(): any {
@@ -114,6 +120,10 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
         return Promise.resolve([]);
     }
   }
+
+  dispose() {
+    this._disposables.forEach(dispose => dispose.dispose());
+  }
 }
 
 export class ListItem<T> extends vscode.TreeItem {
@@ -157,7 +167,7 @@ export class MRItem extends ListItem<IMRData> {
   async getChildren(diffStat: IMRDiffStat): Promise<ListItem<string | number | IFileNode>[]> {
     const files = this._transformTree(diffStat);
     const repoInfo = this.context.workspaceState.get(`repoInfo`, {});
-    const session = this.context.workspaceState.get(`session`, {} as SessionData);
+    const session = this.context.workspaceState.get(`session`, {}) as ISessionData;
 
     return [
       new ListItem(
@@ -266,5 +276,3 @@ export class FileNode extends ListItem<IFileNode> {
     return this;
   }
 }
-
-
