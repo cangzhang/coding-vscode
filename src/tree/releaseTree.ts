@@ -8,8 +8,11 @@ enum ItemType {
 }
 
 export class ReleaseTreeDataProvider implements vscode.TreeDataProvider<ListItem> {
-  private _onDidChangeTreeData: vscode.EventEmitter<ListItem | undefined | void> = new vscode.EventEmitter<ListItem | undefined | void>();
-  readonly onDidChangeTreeData: vscode.Event<ListItem | undefined | void> = this._onDidChangeTreeData.event;
+  private _onDidChangeTreeData: vscode.EventEmitter<
+    ListItem | undefined | void
+  > = new vscode.EventEmitter<ListItem | undefined | void>();
+  readonly onDidChangeTreeData: vscode.Event<ListItem | undefined | void> = this
+    ._onDidChangeTreeData.event;
 
   private _context: vscode.ExtensionContext;
 

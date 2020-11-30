@@ -20,12 +20,7 @@ const AUTH_SERVER = `https://x5p7m.csb.app`;
 const ClientId = `ff768664c96d04235b1cc4af1e3b37a8`;
 const ClientSecret = `d29ebb32cab8b5f0a643b5da7dcad8d1469312c7`;
 
-export const ScopeList = [
-  `user`,
-  `user:email`,
-  `project`,
-  `project:depot`,
-];
+export const ScopeList = [`user`, `user:email`, `project`, `project:depot`];
 const SCOPES = ScopeList.join(`,`);
 const NETWORK_ERROR = 'network error';
 
@@ -35,7 +30,7 @@ class UriEventHandler extends vscode.EventEmitter<vscode.Uri> implements vscode.
   }
 }
 
-export const uriHandler = new UriEventHandler;
+export const uriHandler = new UriEventHandler();
 
 const onDidManuallyProvideToken = new vscode.EventEmitter<string>();
 
@@ -66,7 +61,10 @@ export class CodingServer {
     ]);
     if (accessToken && refreshToken) {
       try {
-        const session = await this.getSessionData(accessToken as TokenType.AccessToken, refreshToken as TokenType.RefreshToken);
+        const session = await this.getSessionData(
+          accessToken as TokenType.AccessToken,
+          refreshToken as TokenType.RefreshToken,
+        );
         return session;
       } catch (e) {
         if (e === NETWORK_ERROR) {
@@ -81,7 +79,10 @@ export class CodingServer {
     return null;
   }
 
-  public async getSessionData(accessToken: TokenType.AccessToken, refreshToken: TokenType.RefreshToken): Promise<ISessionData> {
+  public async getSessionData(
+    accessToken: TokenType.AccessToken,
+    refreshToken: TokenType.RefreshToken,
+  ): Promise<ISessionData> {
     try {
       const repoInfo = this._context.workspaceState.get(`repoInfo`) as RepoInfo;
       if (!repoInfo?.team) {
@@ -108,17 +109,26 @@ export class CodingServer {
   public async startOAuth(team: string, scopes: string) {
     const state = nanoid();
     const { name, publisher } = require('../package.json');
-    const callbackUri = await vscode.env.asExternalUri(vscode.Uri.parse(`${vscode.env.uriScheme}://${publisher}.${name}/on-did-authenticate`));
+    const callbackUri = await vscode.env.asExternalUri(
+      vscode.Uri.parse(`${vscode.env.uriScheme}://${publisher}.${name}/on-did-authenticate`),
+    );
 
     const existingStates = this._pendingStates.get(scopes) || [];
     this._pendingStates.set(scopes, [...existingStates, state]);
 
-    const uri = vscode.Uri.parse(`${AUTH_SERVER}?callbackUri=${encodeURIComponent(callbackUri.toString())}&scope=${scopes}&state=${state}&responseType=code&team=${team}`);
+    const uri = vscode.Uri.parse(
+      `${AUTH_SERVER}?callbackUri=${encodeURIComponent(
+        callbackUri.toString(),
+      )}&scope=${scopes}&state=${state}&responseType=code&team=${team}`,
+    );
     await vscode.env.openExternal(uri);
 
     let existingPromise = this._codeExchangePromises.get(scopes);
     if (!existingPromise) {
-      existingPromise = promiseFromEvent(uriHandler.event, this._exchangeCodeForToken(team, scopes));
+      existingPromise = promiseFromEvent(
+        uriHandler.event,
+        this._exchangeCodeForToken(team, scopes),
+      );
       this._codeExchangePromises.set(scopes, existingPromise);
     }
 
@@ -132,7 +142,10 @@ export class CodingServer {
   }
 
   public async login(team: string, scopes: string = SCOPES): Promise<ISessionData | null> {
-    const { access_token: accessToken, refresh_token: refreshToken } = await this.startOAuth(team, scopes);
+    const { access_token: accessToken, refresh_token: refreshToken } = await this.startOAuth(
+      team,
+      scopes,
+    );
     if (accessToken && refreshToken) {
       try {
         const session = await this.getSessionData(accessToken, refreshToken);
@@ -150,7 +163,14 @@ export class CodingServer {
     return null;
   }
 
-  private _exchangeCodeForToken: (team: string, scopes: string) => PromiseAdapter<vscode.Uri, AuthSuccessResult> = (team, scopes) => async (uri, resolve, reject) => {
+  private _exchangeCodeForToken: (
+    team: string,
+    scopes: string,
+  ) => PromiseAdapter<vscode.Uri, AuthSuccessResult> = (team, scopes) => async (
+    uri,
+    resolve,
+    reject,
+  ) => {
     const query = parseQuery(uri);
     const { code } = query;
 
@@ -162,17 +182,16 @@ export class CodingServer {
     // }
 
     try {
-      const result = await got.post(
-        `https://${team}.coding.net/api/oauth/access_token`,
-        {
+      const result = await got
+        .post(`https://${team}.coding.net/api/oauth/access_token`, {
           searchParams: {
             code,
             client_id: ClientId,
             client_secret: ClientSecret,
             grant_type: `authorization_code`,
           },
-        },
-      ).json();
+        })
+        .json();
 
       if ((result as AuthFailResult).code) {
         this._loggedIn = false;
@@ -187,11 +206,13 @@ export class CodingServer {
 
   public async getUserInfo(team: string, token: string = this._session?.accessToken || ``) {
     try {
-      const result: CodingResponse = await got.get(`https://codingcorp.coding.net/api/current_user`, {
-        searchParams: {
-          access_token: token,
-        },
-      }).json();
+      const result: CodingResponse = await got
+        .get(`https://codingcorp.coding.net/api/current_user`, {
+          searchParams: {
+            access_token: token,
+          },
+        })
+        .json();
 
       if (result.code) {
         console.error(result.msg);
@@ -222,16 +243,23 @@ export class CodingServer {
         throw new Error(`team not exist`);
       }
 
-      const result: CodingResponse = await got.get(`https://${repoInfo.team}.coding.net/api/user/${repoInfo.team}/project/${repoInfo.project}/depot/${repo || repoInfo.repo}/git/merges/query`, {
-        searchParams: {
-          status,
-          sort: `action_at`,
-          page: 1,
-          PageSize: 9999,
-          sortDirection: `DESC`,
-          access_token: this._session?.accessToken,
-        },
-      }).json();
+      const result: CodingResponse = await got
+        .get(
+          `https://${repoInfo.team}.coding.net/api/user/${repoInfo.team}/project/${
+            repoInfo.project
+          }/depot/${repo || repoInfo.repo}/git/merges/query`,
+          {
+            searchParams: {
+              status,
+              sort: `action_at`,
+              page: 1,
+              PageSize: 9999,
+              sortDirection: `DESC`,
+              access_token: this._session?.accessToken,
+            },
+          },
+        )
+        .json();
       return result;
     } catch (err) {
       return Promise.reject(err);
@@ -245,18 +273,23 @@ export class CodingServer {
         throw new Error(`team not exist`);
       }
 
-      const { code, data, msg }: IRepoListResponse = await got.get(`https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.global_key}/depots`, {
-        searchParams: {
-          access_token: this._session?.accessToken,
-        },
-      }).json();
+      const { code, data, msg }: IRepoListResponse = await got
+        .get(
+          `https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.global_key}/depots`,
+          {
+            searchParams: {
+              access_token: this._session?.accessToken,
+            },
+          },
+        )
+        .json();
       if (code) {
         return Promise.reject({ code, msg });
       }
 
       return {
         code,
-        data: data.filter(i => i.vcsType === `git`),
+        data: data.filter((i) => i.vcsType === `git`),
       };
     } catch (err) {
       return Promise.reject(err);
@@ -270,11 +303,16 @@ export class CodingServer {
         throw new Error(`team not exist`);
       }
 
-      const diff: IMRDiffResponse = await got.get(`https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.team}/project/${repoInfo.project}/depot/${repoInfo.repo}/git/merge/${iid}/diff`, {
-        searchParams: {
-          access_token: this._session?.accessToken,
-        },
-      }).json();
+      const diff: IMRDiffResponse = await got
+        .get(
+          `https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.team}/project/${repoInfo.project}/depot/${repoInfo.repo}/git/merge/${iid}/diff`,
+          {
+            searchParams: {
+              access_token: this._session?.accessToken,
+            },
+          },
+        )
+        .json();
       if (diff.code) {
         return Promise.reject(diff);
       }
@@ -291,11 +329,16 @@ export class CodingServer {
         throw new Error(`team not exist`);
       }
 
-      const diff: IMRDetailResponse = await got.get(`https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.team}/project/${repoInfo.project}/depot/${repoInfo.repo}/git/merge/${iid}/detail`, {
-        searchParams: {
-          access_token: this._session?.accessToken,
-        },
-      }).json();
+      const diff: IMRDetailResponse = await got
+        .get(
+          `https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.team}/project/${repoInfo.project}/depot/${repoInfo.repo}/git/merge/${iid}/detail`,
+          {
+            searchParams: {
+              access_token: this._session?.accessToken,
+            },
+          },
+        )
+        .json();
       if (diff.code) {
         return Promise.reject(diff);
       }
@@ -312,11 +355,14 @@ export class CodingServer {
         throw new Error(`team not exist`);
       }
 
-      const { body } = await got.get(`https://${repoInfo.team}.coding.net/p/${repoInfo.project}/d/${repoInfo.repo}/git/raw/${path}`, {
-        searchParams: {
-          access_token: this._session?.accessToken,
+      const { body } = await got.get(
+        `https://${repoInfo.team}.coding.net/p/${repoInfo.project}/d/${repoInfo.repo}/git/raw/${path}`,
+        {
+          searchParams: {
+            access_token: this._session?.accessToken,
+          },
         },
-      });
+      );
 
       return body;
     } catch (err) {
@@ -346,4 +392,3 @@ export class CodingServer {
     }
   }
 }
-

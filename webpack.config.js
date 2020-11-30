@@ -2,7 +2,7 @@ const path = require('path');
 
 module.exports = {
   entry: {
-    main: './webviews/index.tsx'
+    main: './webviews/index.tsx',
   },
   output: {
     path: path.resolve(__dirname, 'out/webviews'),

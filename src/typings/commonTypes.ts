@@ -1,14 +1,14 @@
 import { UserResponse } from './respResult';
 
 export interface RepoInfo {
-	team: string;
-	project: string;
-	repo: string;
+  team: string;
+  project: string;
+  repo: string;
 }
 
 export enum TokenType {
   AccessToken = `accessToken`,
-  RefreshToken = `refreshToken` ,
+  RefreshToken = `refreshToken`,
 }
 
 export interface ISessionData {

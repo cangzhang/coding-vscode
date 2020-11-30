@@ -12,7 +12,7 @@ export interface AuthFailResult {
   code: number;
   msg: {
     [key: string]: string;
-  }
+  };
 }
 
 export interface UserResponse {
@@ -30,9 +30,9 @@ export interface IMRData {
 }
 
 export interface CodingResponse {
-  code: number,
-  data?: any,
-  msg?: string
+  code: number;
+  data?: any;
+  msg?: string;
 }
 
 export interface IRepoItem {
@@ -73,7 +73,7 @@ export interface IMRDiffResponse extends CodingResponse {
   data: {
     isLarge: boolean;
     diffStat: IMRDiffStat;
-  }
+  };
 }
 
 export interface IMRDetail {
@@ -119,5 +119,5 @@ export interface IMRDetailResponse extends CodingResponse {
   data: {
     merge_request: IMRDetail;
     can_merge: boolean;
-  }
+  };
 }

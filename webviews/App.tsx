@@ -6,7 +6,7 @@ function App() {
   const { currentCurrency, updateCurrentCurrency } = currencyStore;
 
   useEffect(() => {
-    window.addEventListener(`message`, ev => {
+    window.addEventListener(`message`, (ev) => {
       const { type, value } = ev.data;
       switch (type) {
         case `UPDATE_CURRENCY`: {
@@ -20,11 +20,13 @@ function App() {
     });
   }, [updateCurrentCurrency]);
 
-  return <>
-    <h1>Hello World!</h1>
-    <h2>Selected: </h2>
-    <pre>{JSON.stringify(currentCurrency)}</pre>
-  </>;
+  return (
+    <>
+      <h1>Hello World!</h1>
+      <h2>Selected: </h2>
+      <pre>{JSON.stringify(currentCurrency)}</pre>
+    </>
+  );
 }
 
 export default view(App);

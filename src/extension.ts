@@ -16,7 +16,9 @@ export async function activate(context: vscode.ExtensionContext) {
   } else {
     context.workspaceState.update(`repoInfo`, repoInfo);
     if (repoInfo?.project && repoInfo?.repo) {
-      vscode.window.showInformationMessage(`CODING: current repo is ${repoInfo?.project}/${repoInfo?.repo}`);
+      vscode.window.showInformationMessage(
+        `CODING: current repo is ${repoInfo?.project}/${repoInfo?.repo}`,
+      );
     }
   }
 
@@ -36,8 +38,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const mrDataProvider = new MRTreeDataProvider(context, codingSrv);
   const releaseDataProvider = new ReleaseTreeDataProvider(context);
-  vscode.window.createTreeView(`mrTreeView`, { treeDataProvider: mrDataProvider, showCollapseAll: true });
-  vscode.window.createTreeView(`releaseTreeView`, { treeDataProvider: releaseDataProvider, showCollapseAll: true });
+  vscode.window.createTreeView(`mrTreeView`, {
+    treeDataProvider: mrDataProvider,
+    showCollapseAll: true,
+  });
+  vscode.window.createTreeView(`releaseTreeView`, {
+    treeDataProvider: releaseDataProvider,
+    showCollapseAll: true,
+  });
 
   context.subscriptions.push(vscode.window.registerUriHandler(uriHandler));
   context.subscriptions.push(
@@ -46,7 +54,7 @@ export async function activate(context: vscode.ExtensionContext) {
     }),
   );
   context.subscriptions.push(
-    vscode.commands.registerCommand('codingPlugin.showDetail', k => {
+    vscode.commands.registerCommand('codingPlugin.showDetail', (k) => {
       Panel.createOrShow(context);
       Panel.currentPanel?.broadcast(`UPDATE_CURRENCY`, k);
     }),
@@ -81,15 +89,12 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('codingPlugin.switchRepo', async () => {
       try {
         const { data } = await codingSrv.getRepoList();
-        const list = data.map(i => ({
+        const list = data.map((i) => ({
           label: i.name,
-          description: i.depotPath.replace(`/p/`, ``)
-            .replace(`/d/`, `/`)
-            .replace(`/git`, ``),
+          description: i.depotPath.replace(`/p/`, ``).replace(`/d/`, `/`).replace(`/git`, ``),
         }));
         const selection = await vscode.window.showQuickPick(list);
-        if (!selection)
-          return;
+        if (!selection) return;
 
         const r = context.workspaceState.get(`repoInfo`, {}) as RepoInfo;
         context.workspaceState.update(`repoInfo`, {
@@ -106,9 +111,18 @@ export async function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(
     vscode.commands.registerCommand(`codingPlugin.showDiff`, async (file: IFileNode) => {
-      const newFileUri = vscode.Uri.parse(file.path, false).with({ scheme: `mr`, query: `commit=${file.newSha}&path=${file.path}` });
-      const oldFileUri = newFileUri.with({ query: `commit=${file.oldSha}&path=${file.path}`});
-      await vscode.commands.executeCommand(`vscode.diff`, oldFileUri, newFileUri, `${file.name} (Merge Request)`, { preserveFocus: true });
+      const newFileUri = vscode.Uri.parse(file.path, false).with({
+        scheme: `mr`,
+        query: `commit=${file.newSha}&path=${file.path}`,
+      });
+      const oldFileUri = newFileUri.with({ query: `commit=${file.oldSha}&path=${file.path}` });
+      await vscode.commands.executeCommand(
+        `vscode.diff`,
+        oldFileUri,
+        newFileUri,
+        `${file.name} (Merge Request)`,
+        { preserveFocus: true },
+      );
     }),
   );
 
@@ -122,5 +136,4 @@ export async function activate(context: vscode.ExtensionContext) {
   }
 }
 
-export function deactivate() {
-}
+export function deactivate() {}

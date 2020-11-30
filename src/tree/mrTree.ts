@@ -5,7 +5,7 @@ import { CodingServer } from '../codingServer';
 import { RepoInfo, ISessionData } from '../typings/commonTypes';
 import { IMRDiffStat, IMRData, IMRPathItem } from '../typings/respResult';
 
-import { getInMemMRContentProvider } from './inMemMRContentProvider'
+import { getInMemMRContentProvider } from './inMemMRContentProvider';
 
 enum MRType {
   Open = `open`,
@@ -22,7 +22,7 @@ enum ItemType {
 
 export interface IFileNode extends IMRPathItem {
   parentPath?: string;
-  children?: IFileNode[]
+  children?: IFileNode[];
   newSha?: string;
   oldSha?: string;
 }
@@ -30,8 +30,11 @@ export interface IFileNode extends IMRPathItem {
 type ITreeNode = string | number | IMRDiffStat | IFileNode | IMRData;
 
 export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITreeNode>> {
-  private _onDidChangeTreeData: vscode.EventEmitter<ListItem<ITreeNode> | undefined | void> = new vscode.EventEmitter<ListItem<ITreeNode> | undefined | void>();
-  readonly onDidChangeTreeData: vscode.Event<ListItem<ITreeNode> | undefined | void> = this._onDidChangeTreeData.event;
+  private _onDidChangeTreeData: vscode.EventEmitter<
+    ListItem<ITreeNode> | undefined | void
+  > = new vscode.EventEmitter<ListItem<ITreeNode> | undefined | void>();
+  readonly onDidChangeTreeData: vscode.Event<ListItem<ITreeNode> | undefined | void> = this
+    ._onDidChangeTreeData.event;
   private _disposables: vscode.Disposable[];
 
   private _context: vscode.ExtensionContext;
@@ -42,7 +45,12 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
     this._service = service;
 
     this._disposables = [];
-    this._disposables.push(vscode.workspace.registerTextDocumentContentProvider('mr', getInMemMRContentProvider(context, this._service)));
+    this._disposables.push(
+      vscode.workspace.registerTextDocumentContentProvider(
+        'mr',
+        getInMemMRContentProvider(context, this._service),
+      ),
+    );
   }
 
   public refresh(): any {
@@ -66,26 +74,45 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
 
     if (!element) {
       return Promise.resolve([
-        new CategoryItem(MRType.Open.toUpperCase(), MRType.Open, vscode.TreeItemCollapsibleState.Collapsed),
-        new CategoryItem(MRType.Closed.toUpperCase(), MRType.Closed, vscode.TreeItemCollapsibleState.Collapsed),
-        new CategoryItem(MRType.All.toUpperCase(), MRType.All, vscode.TreeItemCollapsibleState.Collapsed),
+        new CategoryItem(
+          MRType.Open.toUpperCase(),
+          MRType.Open,
+          vscode.TreeItemCollapsibleState.Collapsed,
+        ),
+        new CategoryItem(
+          MRType.Closed.toUpperCase(),
+          MRType.Closed,
+          vscode.TreeItemCollapsibleState.Collapsed,
+        ),
+        new CategoryItem(
+          MRType.All.toUpperCase(),
+          MRType.All,
+          vscode.TreeItemCollapsibleState.Collapsed,
+        ),
       ]);
     }
 
     switch (element.contextValue) {
       case ItemType.CategoryItem: {
-        return this._service.getMRList(``, element.value as MRType)
-          .then(resp => {
+        return this._service
+          .getMRList(``, element.value as MRType)
+          .then((resp) => {
             if (resp.code) {
               const msg = Object.values(resp.msg || {})[0];
               vscode.window.showErrorMessage(`[MR] list: ${msg}`);
               return [];
             }
 
-            const { data: { list } } = resp;
+            const {
+              data: { list },
+            } = resp;
             if (!list.length) {
               return [
-                new ListItem(`0 merge requests in this category`, `noData`, vscode.TreeItemCollapsibleState.None),
+                new ListItem(
+                  `0 merge requests in this category`,
+                  `noData`,
+                  vscode.TreeItemCollapsibleState.None,
+                ),
               ];
             }
 
@@ -108,7 +135,8 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
           });
       }
       case ItemType.MRItem: {
-        return this._service.getMRDiff((element.value as IMRData).iid)
+        return this._service
+          .getMRDiff((element.value as IMRData).iid)
           .then(({ data: { diffStat } }) => {
             return element.getChildren(diffStat);
           });
@@ -122,7 +150,7 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
   }
 
   dispose() {
-    this._disposables.forEach(dispose => dispose.dispose());
+    this._disposables.forEach((dispose) => dispose.dispose());
   }
 }
 
@@ -170,27 +198,34 @@ export class MRItem extends ListItem<IMRData> {
     const session = this.context.workspaceState.get(`session`, {}) as ISessionData;
 
     return [
-      new ListItem(
-        `Description`,
-        `mr-desc`,
-        vscode.TreeItemCollapsibleState.None,
-        {
-          command: 'codingPlugin.showDetail',
-          title: `${this.value.iid} ${this.value.title}`,
-          arguments: [{
+      new ListItem(`Description`, `mr-desc`, vscode.TreeItemCollapsibleState.None, {
+        command: 'codingPlugin.showDetail',
+        title: `${this.value.iid} ${this.value.title}`,
+        arguments: [
+          {
             ...repoInfo,
             iid: this.value.iid,
             type: `mr`,
             accessToken: session?.accessToken,
-          }],
-        }),
-      ...files.map(f => new FileNode(f.name, f, (f.children || [])?.length > 0 ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None)),
+          },
+        ],
+      }),
+      ...files.map(
+        (f) =>
+          new FileNode(
+            f.name,
+            f,
+            (f.children || [])?.length > 0
+              ? vscode.TreeItemCollapsibleState.Expanded
+              : vscode.TreeItemCollapsibleState.None,
+          ),
+      ),
     ];
   }
 
   private _transformTree(diff: IMRDiffStat) {
     let nodes: IFileNode[] = [];
-    diff.paths.forEach(p => {
+    diff.paths.forEach((p) => {
       nodes = this._makeTree({ ...p, newSha: diff.newSha, oldSha: diff.oldSha }, nodes);
     });
 
@@ -213,14 +248,14 @@ export class MRItem extends ListItem<IMRData> {
   private _insert(node: IFileNode, nodes: IFileNode[]) {
     for (const i of nodes) {
       if (i.parentPath === node.parentPath) {
-        const hasSameParentNode = nodes.find(j => j.path === node.path);
+        const hasSameParentNode = nodes.find((j) => j.path === node.path);
         if (hasSameParentNode) {
           break;
         }
 
         nodes = nodes.concat(node);
       } else if (node.path === `${i.path}/${node.name}`) {
-        const existed = i.children?.find(i => i.path === node.path);
+        const existed = i.children?.find((i) => i.path === node.path);
         if (existed) {
           break;
         }
@@ -252,11 +287,13 @@ export class FileNode extends ListItem<IFileNode> {
       label,
       value,
       collapsibleState,
-      collapsibleState === vscode.TreeItemCollapsibleState.None ? {
-        command: `codingPlugin.showDiff`,
-        title: ``,
-        arguments: [value],
-      } : undefined,
+      collapsibleState === vscode.TreeItemCollapsibleState.None
+        ? {
+            command: `codingPlugin.showDiff`,
+            title: ``,
+            arguments: [value],
+          }
+        : undefined,
     );
   }
 
@@ -264,7 +301,16 @@ export class FileNode extends ListItem<IFileNode> {
     if (this.collapsibleState === vscode.TreeItemCollapsibleState.None) {
       return;
     }
-    this.children = (this.value.children || [])?.map(f => new FileNode(f.name, f, (f.children || [])?.length > 0 ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None));
+    this.children = (this.value.children || [])?.map(
+      (f) =>
+        new FileNode(
+          f.name,
+          f,
+          (f.children || [])?.length > 0
+            ? vscode.TreeItemCollapsibleState.Expanded
+            : vscode.TreeItemCollapsibleState.None,
+        ),
+    );
   }
 
   async getChildren() {

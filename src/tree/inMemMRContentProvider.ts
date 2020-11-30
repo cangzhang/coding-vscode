@@ -16,21 +16,29 @@ export class InMemMRContentProvider implements vscode.TextDocumentContentProvide
     this._onDidChange.fire(uri);
   }
 
-  private _mrFileChangeContentProviders: { [key: number]: (uri: vscode.Uri) => Promise<string> } = {};
+  private _mrFileChangeContentProviders: {
+    [key: number]: (uri: vscode.Uri) => Promise<string>;
+  } = {};
 
   constructor(context: vscode.ExtensionContext, service: CodingServer) {
     this._context = context;
     this._service = service;
   }
 
-  async provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): Promise<string> {
+  async provideTextDocumentContent(
+    uri: vscode.Uri,
+    token: vscode.CancellationToken,
+  ): Promise<string> {
     const params = new URLSearchParams(decodeURIComponent(uri.query));
     const commit = params.get(`commit`);
     const path = params.get(`path`);
     return await this._service.getRemoteFileContent(`${commit}/${path}`);
   }
 
-  registerTextDocumentContentProvider(mrNumber: number, provider: (uri: vscode.Uri) => Promise<string>): vscode.Disposable {
+  registerTextDocumentContentProvider(
+    mrNumber: number,
+    provider: (uri: vscode.Uri) => Promise<string>,
+  ): vscode.Disposable {
     this._mrFileChangeContentProviders[mrNumber] = provider;
 
     return {
@@ -41,6 +49,9 @@ export class InMemMRContentProvider implements vscode.TextDocumentContentProvide
   }
 }
 
-export function getInMemMRContentProvider(context: vscode.ExtensionContext, service: CodingServer): InMemMRContentProvider {
+export function getInMemMRContentProvider(
+  context: vscode.ExtensionContext,
+  service: CodingServer,
+): InMemMRContentProvider {
   return new InMemMRContentProvider(context, service);
 }
