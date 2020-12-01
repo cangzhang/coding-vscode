@@ -12,7 +12,7 @@ import {
 } from './typings/respResult';
 import { PromiseAdapter, promiseFromEvent, parseQuery, parseCloneUrl } from './common/utils';
 import { GitService } from './common/gitService';
-import { RepoInfo, ISessionData, TokenType } from './typings/commonTypes';
+import { IRepoInfo, ISessionData, TokenType } from './typings/commonTypes';
 import { keychain } from './common/keychain';
 import Logger from './common/logger';
 
@@ -84,7 +84,7 @@ export class CodingServer {
     refreshToken: TokenType.RefreshToken,
   ): Promise<ISessionData> {
     try {
-      const repoInfo = this._context.workspaceState.get(`repoInfo`) as RepoInfo;
+      const repoInfo = this._context.workspaceState.get(`repoInfo`) as IRepoInfo;
       if (!repoInfo?.team) {
         throw new Error(`team not exist`);
       }
@@ -238,7 +238,7 @@ export class CodingServer {
 
   public async getMRList(repo?: string, status?: string): Promise<CodingResponse> {
     try {
-      const repoInfo = this._context.workspaceState.get(`repoInfo`) as RepoInfo;
+      const repoInfo = this._context.workspaceState.get(`repoInfo`) as IRepoInfo;
       if (!repoInfo?.team) {
         throw new Error(`team not exist`);
       }
@@ -268,7 +268,7 @@ export class CodingServer {
 
   public async getRepoList() {
     try {
-      const repoInfo = this._context.workspaceState.get(`repoInfo`) as RepoInfo;
+      const repoInfo = this._context.workspaceState.get(`repoInfo`) as IRepoInfo;
       if (!repoInfo?.team) {
         throw new Error(`team not exist`);
       }
@@ -298,7 +298,7 @@ export class CodingServer {
 
   public async getMRDiff(iid: number) {
     try {
-      const repoInfo = this._context.workspaceState.get(`repoInfo`) as RepoInfo;
+      const repoInfo = this._context.workspaceState.get(`repoInfo`) as IRepoInfo;
       if (!repoInfo?.team) {
         throw new Error(`team not exist`);
       }
@@ -324,7 +324,7 @@ export class CodingServer {
 
   public async getMRDetail(iid: number) {
     try {
-      const repoInfo = this._context.workspaceState.get(`repoInfo`) as RepoInfo;
+      const repoInfo = this._context.workspaceState.get(`repoInfo`) as IRepoInfo;
       if (!repoInfo?.team) {
         throw new Error(`team not exist`);
       }
@@ -350,13 +350,14 @@ export class CodingServer {
 
   public async getRemoteFileContent(path: string) {
     try {
-      const repoInfo = this._context.workspaceState.get(`repoInfo`) as RepoInfo;
+      const repoInfo = this._context.workspaceState.get(`repoInfo`) as IRepoInfo;
       if (!repoInfo?.team) {
         throw new Error(`team not exist`);
       }
 
+      const url = `https://${repoInfo.team}.coding.net/p/${repoInfo.project}/d/${repoInfo.repo}/git/raw/${path}`;
       const { body } = await got.get(
-        `https://${repoInfo.team}.coding.net/p/${repoInfo.project}/d/${repoInfo.repo}/git/raw/${path}`,
+        url,
         {
           searchParams: {
             access_token: this._session?.accessToken,

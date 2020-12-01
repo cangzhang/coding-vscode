@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 
 import { CodingServer } from '../codingServer';
-import { RepoInfo, ISessionData } from '../typings/commonTypes';
+import { IRepoInfo, ISessionData } from '../typings/commonTypes';
 import { IMRDiffStat, IMRData, IMRPathItem } from '../typings/respResult';
 
 import { getInMemMRContentProvider } from './inMemMRContentProvider';
@@ -67,7 +67,7 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
       return Promise.resolve([]);
     }
 
-    const repoInfo = this._context.workspaceState.get(`repoInfo`) as RepoInfo;
+    const repoInfo = this._context.workspaceState.get(`repoInfo`) as IRepoInfo;
     if (!repoInfo?.team) {
       throw new Error(`team not exist.`);
     }
@@ -116,7 +116,7 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
               ];
             }
 
-            const repoInfo = this._context.workspaceState.get(`repoInfo`) as RepoInfo;
+            const repoInfo = this._context.workspaceState.get(`repoInfo`) as IRepoInfo;
             if (!repoInfo?.team) {
               throw new Error(`team not exist`);
             }
@@ -199,13 +199,13 @@ export class MRItem extends ListItem<IMRData> {
 
     return [
       new ListItem(`Description`, `mr-desc`, vscode.TreeItemCollapsibleState.None, {
-        command: 'codingPlugin.showDetail',
+        command: 'codingPlugin.showMROverview',
         title: `${this.value.iid} ${this.value.title}`,
         arguments: [
           {
-            ...repoInfo,
-            iid: this.value.iid,
             type: `mr`,
+            iid: this.value.iid,
+            repoInfo,
             accessToken: session?.accessToken,
           },
         ],

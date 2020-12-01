@@ -11,7 +11,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:codingPlugin.show",
+    "onCommand:codingPlugin.showMROverview",
     "onCommand:codingPlugin.login",
     "onView:mrTreeView"
   ],
@@ -23,7 +23,7 @@
   "contributes": {
     "commands": [
       {
-        "command": "codingPlugin.show",
+        "command": "codingPlugin.showMROverview",
         "title": "Show coding tree",
         "category": "Coding plugin"
       },

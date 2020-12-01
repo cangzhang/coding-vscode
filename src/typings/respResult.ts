@@ -1,4 +1,4 @@
-import { TokenType } from './commonTypes';
+import { TokenType, GitChangeType } from './commonTypes';
 
 export interface AuthSuccessResult {
   access_token: TokenType.AccessToken;
@@ -49,7 +49,7 @@ export interface IRepoListResponse extends CodingResponse {
 }
 
 export interface IMRPathItem {
-  changeType: string;
+  changeType: GitChangeType;
   insertions: number;
   deletions: number;
   name: string;

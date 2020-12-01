@@ -1,16 +1,19 @@
 import React, { useEffect } from 'react';
+
 import { view } from '@risingstack/react-easy-state';
-import currencyStore from './currencyStore';
+import appStore from './store/appStore';
+import { actions } from './store/constants';
+import { fetchMRDetail } from './service';
 
 function App() {
-  const { currentCurrency, updateCurrentCurrency } = currencyStore;
+  const { currentMR, switchMR, setMRDetail } = appStore;
 
   useEffect(() => {
-    window.addEventListener(`message`, (ev) => {
+    window.addEventListener(`message`, async (ev) => {
       const { type, value } = ev.data;
       switch (type) {
-        case `UPDATE_CURRENCY`: {
-          updateCurrentCurrency(value);
+        case actions.UPDATE_CURRENT_MR: {
+          switchMR(value);
           break;
         }
         default:
@@ -18,13 +21,17 @@ function App() {
           break;
       }
     });
-  }, [updateCurrentCurrency]);
+  }, [switchMR]);
+
+  useEffect(() => {
+    fetchMRDetail(currentMR.repoInfo, currentMR.iid, currentMR.accessToken).then(r => {
+      setMRDetail(r.merge_request);
+    });
+  }, [currentMR.iid]);
 
   return (
     <>
-      <h1>Hello World!</h1>
-      <h2>Selected: </h2>
-      <pre>{JSON.stringify(currentCurrency)}</pre>
+      <h2>#{currentMR?.iid || ``} {currentMR?.data?.title}</h2>
     </>
   );
 }

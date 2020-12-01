@@ -1,5 +1,5 @@
 import { Event, Disposable, Uri } from 'vscode';
-import { RepoInfo } from '../typings/commonTypes';
+import { IRepoInfo } from '../typings/commonTypes';
 
 export interface PromiseAdapter<T, U> {
   (value: T, resolve: (value: U | PromiseLike<U>) => void, reject: (reason: any) => void): any;
@@ -41,7 +41,7 @@ export function parseQuery(uri: Uri) {
   }, {});
 }
 
-export function parseCloneUrl(url: string): RepoInfo | null {
+export function parseCloneUrl(url: string): IRepoInfo | null {
   const reg = /^(https:\/\/|git@)e\.coding\.net(\/|:)(.*)\.git$/i;
   const result = url.match(reg);
 

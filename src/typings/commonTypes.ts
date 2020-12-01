@@ -1,6 +1,6 @@
-import { UserResponse } from './respResult';
+import { IMRDetail, IMRDetailResponse, UserResponse } from './respResult';
 
-export interface RepoInfo {
+export interface IRepoInfo {
   team: string;
   project: string;
   repo: string;
@@ -16,4 +16,23 @@ export interface ISessionData {
   user: UserResponse | null;
   accessToken: string;
   refreshToken: string;
+}
+
+export enum GitChangeType {
+  ADD = `ADD`,
+  COPY = `COPY`,
+  DELETE = `DELETE`,
+  MODIFY = `MODIFY`,
+  RENAME = `RENAME`,
+  TYPE = `TYPE`,
+  UNKNOWN = `UNKNOWN`,
+  UNMERGED = `UNMERGED`
+}
+
+export interface IMRWebViewDetail {
+  type: string;
+  iid: string;
+  accessToken: string;
+  repoInfo: IRepoInfo;
+  data: IMRDetail;
 }

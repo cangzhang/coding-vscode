@@ -1,12 +1,10 @@
 import * as vscode from 'vscode';
-import got from 'got';
 
-// import Logger from './common/logger';
 import { uriHandler, CodingServer } from './codingServer';
 import { Panel } from './panel';
 import { IFileNode, MRTreeDataProvider } from './tree/mrTree';
 import { ReleaseTreeDataProvider } from './tree/releaseTree';
-import { RepoInfo } from './typings/commonTypes';
+import { IRepoInfo, IMRWebViewDetail } from './typings/commonTypes';
 
 export async function activate(context: vscode.ExtensionContext) {
   const repoInfo = await CodingServer.getRepoParams();
@@ -49,19 +47,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(vscode.window.registerUriHandler(uriHandler));
   context.subscriptions.push(
-    vscode.commands.registerCommand('codingPlugin.show', () => {
-      Panel.createOrShow(context);
-    }),
-  );
-  context.subscriptions.push(
-    vscode.commands.registerCommand('codingPlugin.showDetail', (k) => {
-      Panel.createOrShow(context);
-      Panel.currentPanel?.broadcast(`UPDATE_CURRENCY`, k);
+    vscode.commands.registerCommand('codingPlugin.showMROverview', (data: IMRWebViewDetail) => {
+      Panel.createOrShow(context, data);
+      Panel.currentPanel?.broadcast(`action.UPDATE_CURRENT_MR`, data);
     }),
   );
   context.subscriptions.push(
     vscode.commands.registerCommand('codingPlugin.login', async () => {
-      const rInfo = context.workspaceState.get(`repoInfo`, {}) as RepoInfo;
+      const rInfo = context.workspaceState.get(`repoInfo`, {}) as IRepoInfo;
       const session = await codingSrv.login(rInfo?.team || ``);
       if (!session?.accessToken) {
         console.error(`No token provided.`);
@@ -96,7 +89,7 @@ export async function activate(context: vscode.ExtensionContext) {
         const selection = await vscode.window.showQuickPick(list);
         if (!selection) return;
 
-        const r = context.workspaceState.get(`repoInfo`, {}) as RepoInfo;
+        const r = context.workspaceState.get(`repoInfo`, {}) as IRepoInfo;
         context.workspaceState.update(`repoInfo`, {
           team: r?.team,
           project: selection?.description.replace(`/${selection?.label}`, ``),
@@ -111,15 +104,16 @@ export async function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(
     vscode.commands.registerCommand(`codingPlugin.showDiff`, async (file: IFileNode) => {
-      const newFileUri = vscode.Uri.parse(file.path, false).with({
+      const headUri = vscode.Uri.parse(file.path, false).with({
+        // path: `${file.path}.txt`,
         scheme: `mr`,
         query: `commit=${file.newSha}&path=${file.path}`,
       });
-      const oldFileUri = newFileUri.with({ query: `commit=${file.oldSha}&path=${file.path}` });
+      const parentUri = headUri.with({ query: `commit=${file.oldSha}&path=${file.path}` });
       await vscode.commands.executeCommand(
         `vscode.diff`,
-        oldFileUri,
-        newFileUri,
+        parentUri,
+        headUri,
         `${file.name} (Merge Request)`,
         { preserveFocus: true },
       );
@@ -136,4 +130,5 @@ export async function activate(context: vscode.ExtensionContext) {
   }
 }
 
-export function deactivate() {}
+export function deactivate() {
+}

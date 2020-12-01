@@ -6,5 +6,3 @@
 - `yarn install`
 - `yarn watch` or `yarn compile`
 - `F5` to start debugging
-
-Run the `Cat Coding: Start cat coding session` to create the webview.

@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
+import { IMRWebViewDetail } from './typings/commonTypes'
+
 export class Panel {
   /**
    * Track the currently panel. Only allow a single panel to exist at a time.
@@ -14,7 +16,7 @@ export class Panel {
   private readonly _extensionPath: string;
   private _disposables: vscode.Disposable[] = [];
 
-  public static createOrShow(context: vscode.ExtensionContext) {
+  public static createOrShow(context: vscode.ExtensionContext, data: IMRWebViewDetail) {
     const { extensionUri, extensionPath } = context;
     const column = vscode.window.activeTextEditor
       ? vscode.window.activeTextEditor.viewColumn
@@ -39,7 +41,7 @@ export class Panel {
       },
     );
 
-    Panel.currentPanel = new Panel(panel, extensionUri, extensionPath);
+    Panel.currentPanel = new Panel(panel, extensionUri, extensionPath, data);
   }
 
   public static revive(
@@ -50,13 +52,13 @@ export class Panel {
     Panel.currentPanel = new Panel(panel, extensionUri, extensionPath);
   }
 
-  private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, extensionPath: string) {
+  private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, extensionPath: string, mr?: IMRWebViewDetail) {
     this._panel = panel;
     this._extensionUri = extensionUri;
     this._extensionPath = extensionPath;
 
     // Set the webview's initial html content
-    this._update();
+    this._update(mr);
 
     // Listen for when the panel is disposed
     // This happens when the user closes the panel or when the panel is closed programatically
@@ -64,7 +66,7 @@ export class Panel {
 
     // Update the content based on view changes
     this._panel.onDidChangeViewState(
-      (e) => {
+      () => {
         if (this._panel.visible) {
           this._update();
         }
@@ -114,28 +116,28 @@ export class Panel {
     }
   }
 
-  private _update() {
+  private _update(data?: IMRWebViewDetail) {
     const webview = this._panel.webview;
 
     // Vary the webview's content based on where it is located in the editor.
     switch (this._panel.viewColumn) {
       case vscode.ViewColumn.Two:
-        this._updateForCat(webview);
+        this._updateForCat(webview, data);
         return;
 
       case vscode.ViewColumn.Three:
-        this._updateForCat(webview);
+        this._updateForCat(webview, data);
         return;
 
       case vscode.ViewColumn.One:
       default:
-        this._updateForCat(webview);
+        this._updateForCat(webview, data);
         return;
     }
   }
 
-  private _updateForCat(webview: vscode.Webview) {
-    this._panel.title = `Coding cat ${Date.now()}`;
+  private _updateForCat(webview: vscode.Webview, data?: IMRWebViewDetail) {
+    this._panel.title = `Merge Request ${data?.iid || ``}`;
     this._panel.webview.html = this._getHtmlForWebview(webview);
   }
 
@@ -148,18 +150,17 @@ export class Panel {
 		  <head>
 			  <meta charset="UTF-8">
 			  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-			  <title>Coding Cat</title>
-  
+			  <title>Merge Request Overview</title>
+
 			  <meta http-equiv="Content-Security-Policy"
 						  content="default-src 'unsafe-inline';
 								   img-src https:;
 				   script-src 'unsafe-eval' 'unsafe-inline' vscode-resource:;
-				   connect-src 'self' https:;
+				   connect-src 'self' https: *.coding.net;
 								   style-src vscode-resource: 'unsafe-inline';">
 		  </head>
 		  <body>
 			  <div id="root"></div>
-  
 			  <script src="${appUri}"></script>
 		  </body>
 		  </html>`;
