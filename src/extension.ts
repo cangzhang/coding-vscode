@@ -47,9 +47,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(vscode.window.registerUriHandler(uriHandler));
   context.subscriptions.push(
-    vscode.commands.registerCommand('codingPlugin.showMROverview', (data: IMRWebViewDetail) => {
-      Panel.createOrShow(context, data);
-      Panel.currentPanel?.broadcast(`action.UPDATE_CURRENT_MR`, data);
+    vscode.commands.registerCommand('codingPlugin.showMROverview', async (mr: IMRWebViewDetail) => {
+      Panel.createOrShow(context);
+      const resp = await codingSrv.getMRDetail(mr.iid);
+      mr.data = resp.data.merge_request;
+      Panel.currentPanel?.broadcast(`action.UPDATE_CURRENT_MR`, {
+        ...mr,
+        data: resp.data.merge_request,
+      });
     }),
   );
   context.subscriptions.push(

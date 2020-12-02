@@ -110,20 +110,29 @@
     "watch:webviews": "webpack --watch --mode development",
     "lint": "eslint . --ext .ts,.tsx"
   },
+  "babel": {
+    "plugins": [
+      "babel-plugin-styled-components"
+    ]
+  },
+  "resolutions": {
+    "styled-components": "^5"
+  },
   "dependencies": {
     "@risingstack/react-easy-state": "^6.3.0",
     "got": "^11.7.0",
     "keytar": "^7.0.0",
-    "ky": "^0.24.0",
     "nanoid": "^3.1.16",
     "react": "^17.0.0",
-    "react-dom": "^17.0.0"
+    "react-dom": "^17.0.0",
+    "styled-components": "^5.2.1"
   },
   "devDependencies": {
     "@types/react": "^16.9.53",
     "@types/react-dom": "^16.9.8",
     "@typescript-eslint/eslint-plugin": "^3.0.2",
     "@typescript-eslint/parser": "^3.0.2",
+    "babel-plugin-styled-components": "^1.12.0",
     "css-loader": "^5.0.0",
     "eslint": "^7.1.0",
     "husky": "^5.0.4",

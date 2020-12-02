@@ -1,7 +1,5 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
 
-import { IMRWebViewDetail } from './typings/commonTypes';
 import { getNonce } from './common/utils';
 
 export class Panel {
@@ -17,7 +15,7 @@ export class Panel {
   private readonly _extensionPath: string;
   private _disposables: vscode.Disposable[] = [];
 
-  public static createOrShow(context: vscode.ExtensionContext, data: IMRWebViewDetail) {
+  public static createOrShow(context: vscode.ExtensionContext) {
     const { extensionUri, extensionPath } = context;
     const column = vscode.window.activeTextEditor
       ? vscode.window.activeTextEditor.viewColumn
@@ -42,7 +40,7 @@ export class Panel {
       },
     );
 
-    Panel.currentPanel = new Panel(panel, extensionUri, extensionPath, data);
+    Panel.currentPanel = new Panel(panel, extensionUri, extensionPath);
   }
 
   public static revive(
@@ -53,13 +51,13 @@ export class Panel {
     Panel.currentPanel = new Panel(panel, extensionUri, extensionPath);
   }
 
-  private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, extensionPath: string, mr?: IMRWebViewDetail) {
+  private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, extensionPath: string) {
     this._panel = panel;
     this._extensionUri = extensionUri;
     this._extensionPath = extensionPath;
 
     // Set the webview's initial html content
-    this._update(mr);
+    this._update();
 
     // Listen for when the panel is disposed
     // This happens when the user closes the panel or when the panel is closed programatically
@@ -117,28 +115,28 @@ export class Panel {
     }
   }
 
-  private _update(data?: IMRWebViewDetail) {
+  private _update() {
     const webview = this._panel.webview;
 
     // Vary the webview's content based on where it is located in the editor.
     switch (this._panel.viewColumn) {
       case vscode.ViewColumn.Two:
-        this._updateForCat(webview, data);
+        this._updateForCat(webview);
         return;
 
       case vscode.ViewColumn.Three:
-        this._updateForCat(webview, data);
+        this._updateForCat(webview);
         return;
 
       case vscode.ViewColumn.One:
       default:
-        this._updateForCat(webview, data);
+        this._updateForCat(webview);
         return;
     }
   }
 
-  private _updateForCat(webview: vscode.Webview, data?: IMRWebViewDetail) {
-    this._panel.title = `Merge Request ${data?.iid || ``}`;
+  private _updateForCat(webview: vscode.Webview) {
+    this._panel.title = `Merge Request`;
     this._panel.webview.html = this._getHtmlForWebview(webview);
   }
 
@@ -154,7 +152,7 @@ export class Panel {
 			  <title>Merge Request Overview</title>
 			  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 			  <meta http-equiv="Content-Security-Policy"
-              content="default-src 'unsafe-eval'; style-src vscode-resource: 'unsafe-inline' http: https: data:;; img-src vscode-resource: https:; script-src 'nonce-${nonce}' 'unsafe-eval'; connect-src https:">
+              content="default-src 'none'; style-src vscode-resource: 'unsafe-inline' http: https: data:;; img-src vscode-resource: https:; script-src 'nonce-${nonce}' 'unsafe-eval'; connect-src https:">
 		  </head>
 		  <body>
 			  <div id="root"></div>

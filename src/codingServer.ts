@@ -322,7 +322,7 @@ export class CodingServer {
     }
   }
 
-  public async getMRDetail(iid: number) {
+  public async getMRDetail(iid: string) {
     try {
       const repoInfo = this._context.workspaceState.get(`repoInfo`) as IRepoInfo;
       if (!repoInfo?.team) {
@@ -339,9 +339,11 @@ export class CodingServer {
           },
         )
         .json();
+
       if (diff.code) {
         return Promise.reject(diff);
       }
+
       return diff;
     } catch (err) {
       return Promise.reject(err);
