@@ -38,7 +38,7 @@ export class CodingServer {
   private _pendingStates = new Map<string, string[]>();
   private _codeExchangePromises = new Map<string, Promise<AuthSuccessResult>>();
 
-  private _loggedIn: boolean = false;
+  private _loggedIn = false;
   private _context: vscode.ExtensionContext;
   private _session: ISessionData | null = null;
 
@@ -329,7 +329,7 @@ export class CodingServer {
         throw new Error(`team not exist`);
       }
 
-      const diff: IMRDetailResponse = await got
+      const detail: IMRDetailResponse = await got
         .get(
           `https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.team}/project/${repoInfo.project}/depot/${repoInfo.repo}/git/merge/${iid}/detail`,
           {
@@ -339,10 +339,11 @@ export class CodingServer {
           },
         )
         .json();
-      if (diff.code) {
-        return Promise.reject(diff);
+
+      if (detail.code) {
+        return Promise.reject(detail);
       }
-      return diff;
+      return detail;
     } catch (err) {
       return Promise.reject(err);
     }

@@ -2,8 +2,10 @@ import React, { useEffect } from 'react';
 
 import { view } from '@risingstack/react-easy-state';
 import appStore from './store/appStore';
-import { actions } from './store/constants';
-import { fetchMRDetail } from './service';
+import { formatMessage } from './utils/message';
+import { webviewMsg, actions } from '../src/constants/message';
+
+const vscode = acquireVsCodeApi();
 
 function App() {
   const { currentMR, switchMR, setMRDetail } = appStore;
@@ -16,22 +18,30 @@ function App() {
           switchMR(value);
           break;
         }
+        case actions.UPDATE_CURRENT_MR_DATA: {
+          setMRDetail(value);
+          break;
+        }
         default:
           console.log(type, value);
           break;
       }
     });
-  }, [switchMR]);
+  }, [switchMR, setMRDetail]);
 
   useEffect(() => {
-    fetchMRDetail(currentMR.repoInfo, currentMR.iid, currentMR.accessToken).then(r => {
-      setMRDetail(r.merge_request);
-    });
+    if (currentMR.iid !== undefined) {
+      vscode.postMessage({
+        command: webviewMsg.FETCH_MR_DETAIL,
+        data: formatMessage(currentMR)
+      });
+    }
   }, [currentMR.iid]);
 
   return (
     <>
-      <h2>#{currentMR?.iid || ``} {currentMR?.data?.title}</h2>
+      <h2>#{currentMR?.iid || ``} {currentMR?.data?.merge_request?.title}</h2>
+      <div>{JSON.stringify(currentMR)}</div>
     </>
   );
 }

@@ -48,7 +48,7 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(vscode.window.registerUriHandler(uriHandler));
   context.subscriptions.push(
     vscode.commands.registerCommand('codingPlugin.showMROverview', (data: IMRWebViewDetail) => {
-      Panel.createOrShow(context, data);
+      Panel.createOrShow(context, data, codingSrv);
       Panel.currentPanel?.broadcast(`action.UPDATE_CURRENT_MR`, data);
     }),
   );
@@ -124,7 +124,7 @@ export async function activate(context: vscode.ExtensionContext) {
     // Make sure we register a serializer in activation event
     vscode.window.registerWebviewPanelSerializer(Panel.viewType, {
       async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: any) {
-        Panel.revive(webviewPanel, context.extensionUri, context.extensionPath);
+        Panel.revive(webviewPanel, codingSrv, context.extensionUri, context.extensionPath);
       },
     });
   }

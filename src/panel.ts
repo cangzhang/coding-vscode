@@ -3,6 +3,8 @@ import * as path from 'path';
 
 import { IMRWebViewDetail } from './typings/commonTypes';
 import { getNonce } from './common/utils';
+import { CodingServer } from './codingServer';
+import { webviewMsg, actions } from './constants/message';
 
 export class Panel {
   /**
@@ -15,9 +17,10 @@ export class Panel {
   private readonly _panel: vscode.WebviewPanel;
   private readonly _extensionUri: vscode.Uri;
   private readonly _extensionPath: string;
+  private readonly _codingSrv: CodingServer;
   private _disposables: vscode.Disposable[] = [];
 
-  public static createOrShow(context: vscode.ExtensionContext, data: IMRWebViewDetail) {
+  public static createOrShow(context: vscode.ExtensionContext, data: IMRWebViewDetail, codingSrv: CodingServer) {
     const { extensionUri, extensionPath } = context;
     const column = vscode.window.activeTextEditor
       ? vscode.window.activeTextEditor.viewColumn
@@ -42,21 +45,23 @@ export class Panel {
       },
     );
 
-    Panel.currentPanel = new Panel(panel, extensionUri, extensionPath, data);
+    Panel.currentPanel = new Panel(panel, codingSrv, extensionUri, extensionPath, data);
   }
 
   public static revive(
     panel: vscode.WebviewPanel,
+    codingSrv: CodingServer,
     extensionUri: vscode.Uri,
     extensionPath: string,
   ) {
-    Panel.currentPanel = new Panel(panel, extensionUri, extensionPath);
+    Panel.currentPanel = new Panel(panel, codingSrv, extensionUri, extensionPath);
   }
 
-  private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, extensionPath: string, mr?: IMRWebViewDetail) {
+  private constructor(panel: vscode.WebviewPanel, codingSrv: CodingServer, extensionUri: vscode.Uri, extensionPath: string, mr?: IMRWebViewDetail) {
     this._panel = panel;
     this._extensionUri = extensionUri;
     this._extensionPath = extensionPath;
+    this._codingSrv = codingSrv;
 
     // Set the webview's initial html content
     this._update(mr);
@@ -78,11 +83,14 @@ export class Panel {
 
     // Handle messages from the webview
     this._panel.webview.onDidReceiveMessage(
-      (message) => {
+      async (message) => {
         switch (message.command) {
           case 'alert':
             vscode.window.showErrorMessage(message.text);
             return;
+          case webviewMsg.FETCH_MR_DETAIL:
+            const result = await this._codingSrv.getMRDetail(message.data.iid);
+            this.broadcast(actions.UPDATE_CURRENT_MR_DATA, result.data);
         }
       },
       null,

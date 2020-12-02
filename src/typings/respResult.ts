@@ -113,6 +113,24 @@ export interface IMRDetail {
     projectId: number;
     vcsType: string;
   };
+  merge_request: {
+    merged_sha: string;
+    body: string;
+    body_plan: string;
+    source_sha: string;
+    target_sha: string;
+    base_sha: string;
+    conflicts: [];
+    id: number;
+    srcBranch: string;
+    desBranch: string;
+    title: string;
+    iid: number;
+    merge_status: string;
+    path: string;
+    created_at: number;
+    updated_at: number;
+  };
 }
 
 export interface IMRDetailResponse extends CodingResponse {
