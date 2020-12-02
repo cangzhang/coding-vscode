@@ -114,7 +114,6 @@
     "@risingstack/react-easy-state": "^6.3.0",
     "got": "^11.7.0",
     "keytar": "^7.0.0",
-    "ky": "^0.24.0",
     "nanoid": "^3.1.16",
     "react": "^17.0.0",
     "react-dom": "^17.0.0"
