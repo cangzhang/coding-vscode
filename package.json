@@ -117,8 +117,7 @@
     "ky": "^0.24.0",
     "nanoid": "^3.1.16",
     "react": "^17.0.0",
-    "react-dom": "^17.0.0",
-    "simple-git": "^2.21.0"
+    "react-dom": "^17.0.0"
   },
   "devDependencies": {
     "@types/react": "^16.9.53",

@@ -1,4 +1,4 @@
-import { IMRDetail, IMRDetailResponse, UserResponse } from './respResult';
+import { IMRDetail, UserResponse } from './respResult';
 
 export interface IRepoInfo {
   team: string;

@@ -57,3 +57,12 @@ export function parseCloneUrl(url: string): IRepoInfo | null {
   const [team, project, repo] = str.split(`/`);
   return { team, project, repo: repo || project };
 }
+
+export function getNonce() {
+  let text = '';
+  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  for (let i = 0; i < 32; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  return text;
+}

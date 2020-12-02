@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-import { IMRWebViewDetail } from './typings/commonTypes'
+import { IMRWebViewDetail } from './typings/commonTypes';
+import { getNonce } from './common/utils';
 
 export class Panel {
   /**
@@ -142,27 +143,24 @@ export class Panel {
   }
 
   private _getHtmlForWebview(webview: vscode.Webview) {
-    const appPathOnDisk = vscode.Uri.file(path.join(this._extensionPath, 'out/webviews/main.js'));
-    const appUri = appPathOnDisk.with({ scheme: 'vscode-resource' });
+    const appPathOnDisk = vscode.Uri.joinPath(this._extensionUri, 'out/webviews/main.js');
+    const appUri = webview.asWebviewUri(appPathOnDisk);
+    const nonce = getNonce();
 
     return `<!DOCTYPE html>
 		  <html lang="en">
 		  <head>
 			  <meta charset="UTF-8">
-			  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 			  <title>Merge Request Overview</title>
-
+			  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 			  <meta http-equiv="Content-Security-Policy"
-						  content="default-src 'unsafe-inline';
-								   img-src https:;
-				   script-src 'unsafe-eval' 'unsafe-inline' vscode-resource:;
-				   connect-src 'self' https: *.coding.net;
-								   style-src vscode-resource: 'unsafe-inline';">
+              content="default-src 'unsafe-eval'; style-src vscode-resource: 'unsafe-inline' http: https: data:;; img-src vscode-resource: https:; script-src 'nonce-${nonce}' 'unsafe-eval'; connect-src https:">
 		  </head>
 		  <body>
 			  <div id="root"></div>
-			  <script src="${appUri}"></script>
+			  <script nonce="${nonce}" src="${appUri}"></script>
 		  </body>
 		  </html>`;
   }
 }
+
