@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { view } from '@risingstack/react-easy-state';
 import appStore from './store/appStore';
 import { actions } from './store/constants';
+import persistDataHook from './hooks/persistDataHook';
 
 const LoadingWrapper = styled.div`
   font-size: 16px;
@@ -31,11 +32,12 @@ function App() {
           break;
         }
         default:
-          console.log(type, value);
           break;
       }
     });
   }, [updateCurrentMR]);
+
+  persistDataHook();
 
   if (!currentMR.iid) {
     return <LoadingWrapper>Please select an merge request first.</LoadingWrapper>;
