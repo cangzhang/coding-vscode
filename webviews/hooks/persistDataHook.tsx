@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { persistData, removeDataPersist } from '../store/appStore';
+import { persistData, removeDataPersist } from 'webviews/store/appStore';
 
 const persistDataHook = () => {
   const effect = useRef(() => {

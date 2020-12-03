@@ -6,7 +6,11 @@
     "outDir": "../out",
     "sourceMap": true,
     "strict": true,
-    "rootDir": "."
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "src/*": ["./*"]
+    }
   },
   "exclude": ["node_modules", ".vscode-test"]
 }

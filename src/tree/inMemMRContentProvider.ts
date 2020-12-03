@@ -1,7 +1,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import { CodingServer } from '../codingServer';
+import { CodingServer } from 'src/codingServer';
 
 export class InMemMRContentProvider implements vscode.TextDocumentContentProvider {
   private _onDidChange = new vscode.EventEmitter<vscode.Uri>();

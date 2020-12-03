@@ -1,5 +1,5 @@
 import { autoEffect, clearEffect, store } from '@risingstack/react-easy-state';
-import { IMRWebViewDetail } from '../../src/typings/commonTypes';
+import { IMRWebViewDetail } from 'src/typings/commonTypes';
 
 export const vscode = acquireVsCodeApi();
 

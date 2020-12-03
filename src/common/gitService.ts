@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as cp from 'child_process';
 import { promisify } from 'util';
 
-import { GitExtension } from '../typings/git';
+import { GitExtension } from 'src/typings/git';
 
 const exec = promisify(cp.exec);
 

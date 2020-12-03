@@ -9,12 +9,12 @@ import {
   IRepoListResponse,
   IMRDiffResponse,
   IMRDetailResponse,
-} from './typings/respResult';
-import { PromiseAdapter, promiseFromEvent, parseQuery, parseCloneUrl } from './common/utils';
-import { GitService } from './common/gitService';
-import { IRepoInfo, ISessionData, TokenType } from './typings/commonTypes';
-import { keychain } from './common/keychain';
-import Logger from './common/logger';
+} from 'src/typings/respResult';
+import { PromiseAdapter, promiseFromEvent, parseQuery, parseCloneUrl } from 'src/common/utils';
+import { GitService } from 'src/common/gitService';
+import { IRepoInfo, ISessionData, TokenType } from 'src/typings/commonTypes';
+import { keychain } from 'src/common/keychain';
+import Logger from 'src/common/logger';
 
 const AUTH_SERVER = `https://x5p7m.csb.app`;
 const ClientId = `ff768664c96d04235b1cc4af1e3b37a8`;
