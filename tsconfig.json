@@ -18,7 +18,11 @@
     "suppressImplicitAnyIndexErrors": true,
     "noUnusedLocals": true,
     "skipLibCheck": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "paths": {
+      "webviews/*": ["webviews/*"],
+      "src/*": ["src/*"],
+    }
   },
   "include": ["webviews", "types"]
 }

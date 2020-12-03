@@ -1,10 +1,11 @@
+import 'module-alias/register';
 import * as vscode from 'vscode';
 
-import { uriHandler, CodingServer } from './codingServer';
-import { Panel } from './panel';
-import { IFileNode, MRTreeDataProvider } from './tree/mrTree';
-import { ReleaseTreeDataProvider } from './tree/releaseTree';
-import { IRepoInfo, IMRWebViewDetail } from './typings/commonTypes';
+import { uriHandler, CodingServer } from 'src/codingServer';
+import { Panel } from 'src/panel';
+import { IFileNode, MRTreeDataProvider } from 'src/tree/mrTree';
+import { ReleaseTreeDataProvider } from 'src/tree/releaseTree';
+import { IRepoInfo, IMRWebViewDetail } from 'src/typings/commonTypes';
 
 export async function activate(context: vscode.ExtensionContext) {
   const repoInfo = await CodingServer.getRepoParams();

@@ -2,9 +2,9 @@ import React, { useEffect } from 'react';
 import styled from 'styled-components';
 
 import { view } from '@risingstack/react-easy-state';
-import appStore from './store/appStore';
-import { actions } from './store/constants';
-import persistDataHook from './hooks/persistDataHook';
+import appStore from 'webviews/store/appStore';
+import { actions } from 'webviews/store/constants';
+import persistDataHook from 'webviews/hooks/persistDataHook';
 
 const LoadingWrapper = styled.div`
   font-size: 16px;

@@ -1,5 +1,5 @@
 import { Event, Disposable, Uri } from 'vscode';
-import { IRepoInfo } from '../typings/commonTypes';
+import { IRepoInfo } from 'src/typings/commonTypes';
 
 export interface PromiseAdapter<T, U> {
   (value: T, resolve: (value: U | PromiseLike<U>) => void, reject: (reason: any) => void): any;

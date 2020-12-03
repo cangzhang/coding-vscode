@@ -2,9 +2,9 @@ import * as vscode from 'vscode';
 import { TreeItemCollapsibleState } from 'vscode';
 import * as path from 'path';
 
-import { CodingServer } from '../codingServer';
-import { IRepoInfo, ISessionData, GitChangeType } from '../typings/commonTypes';
-import { IMRDiffStat, IMRData, IMRPathItem } from '../typings/respResult';
+import { CodingServer } from 'src/codingServer';
+import { IRepoInfo, ISessionData, GitChangeType } from 'src/typings/commonTypes';
+import { IMRDiffStat, IMRData, IMRPathItem } from 'src/typings/respResult';
 import { getInMemMRContentProvider } from './inMemMRContentProvider';
 
 enum MRType {

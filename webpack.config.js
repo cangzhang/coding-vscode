@@ -11,6 +11,10 @@ module.exports = {
   devtool: 'eval-source-map',
   resolve: {
     extensions: ['.js', '.ts', '.tsx', '.json'],
+    alias: {
+      webviews: path.resolve(__dirname, `webviews`),
+      src: path.resolve(__dirname, `src`),
+    },
   },
   module: {
     rules: [
