@@ -127,3 +127,34 @@ export interface IMRDetailResponse extends CodingResponse {
     can_merge: boolean;
   };
 }
+
+export interface ICreateMRBody {
+  srcBranch: string;
+  desBranch: string;
+  title: string;
+  content: string;
+  reviewers?: string;
+  labels?: string;
+  watchers?: string;
+}
+
+export interface ICreateMRResp extends CodingResponse {
+  can_edit: boolean;
+  can_edit_src_branch: boolean;
+  merge_request: IMRDetail;
+}
+
+export interface IBranchItem {
+  commitTime: number;
+  deny_force_push: boolean;
+  force_squash: boolean;
+  is_default_branch: boolean;
+  is_protected: boolean;
+  name: string;
+  sha: string;
+  status_check: boolean;
+}
+
+export interface IBranchListResp extends CodingResponse {
+  data: IBranchItem[];
+}

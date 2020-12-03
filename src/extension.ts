@@ -6,8 +6,10 @@ import { Panel } from 'src/panel';
 import { IFileNode, MRTreeDataProvider } from 'src/tree/mrTree';
 import { ReleaseTreeDataProvider } from 'src/tree/releaseTree';
 import { IRepoInfo, IMRWebViewDetail } from 'src/typings/commonTypes';
+import { GitService } from 'src/common/gitService';
 
 export async function activate(context: vscode.ExtensionContext) {
+  await GitService.init();
   const repoInfo = await CodingServer.getRepoParams();
 
   if (!repoInfo?.team) {
@@ -32,7 +34,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const mrDataProvider = new MRTreeDataProvider(context, codingSrv);
   const releaseDataProvider = new ReleaseTreeDataProvider(context);
-  vscode.window.createTreeView(`mrTreeView`, {
+  const mrTree = vscode.window.createTreeView(`mrTreeView`, {
     treeDataProvider: mrDataProvider,
     showCollapseAll: true,
   });
@@ -77,6 +79,58 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('codingPlugin.refresh', () => {
       mrDataProvider.refresh();
+    }),
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand('codingPlugin.newMrDesc', async () => {
+      const doc = await vscode.workspace.openTextDocument({
+        language: `markdown`,
+      });
+      await vscode.window.showTextDocument(doc);
+    }),
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand('codingPlugin.createMr', async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        return;
+      }
+
+      const content = editor.document.getText();
+      if (!content) {
+        return;
+      }
+
+      const { data } = await codingSrv.getBranchList();
+      const list = data.map((i) => ({
+        label: i.name,
+        description: ``,
+      }));
+      const src = await vscode.window.showQuickPick(list, {
+        placeHolder: `Please choose source branch`,
+      });
+      if (!src) return;
+      const des = await vscode.window.showQuickPick(list, {
+        placeHolder: `Please choose target branch`,
+      });
+      if (!des) return;
+      const title = await vscode.window.showInputBox({ placeHolder: `Please input title` });
+      if (!title) {
+        return;
+      }
+
+      try {
+        const newMr = await codingSrv.createMR({
+          content,
+          title,
+          srcBranch: src.label,
+          desBranch: des.label,
+        });
+        vscode.window.showInformationMessage(
+          `Merge request ${newMr.data.merge_request.title} was created successfully.`,
+        );
+        mrDataProvider.refresh();
+      } catch (err) {}
     }),
   );
   context.subscriptions.push(
@@ -131,5 +185,4 @@ export async function activate(context: vscode.ExtensionContext) {
   }
 }
 
-export function deactivate() {
-}
+export function deactivate() {}

@@ -9,6 +9,9 @@ import {
   IRepoListResponse,
   IMRDiffResponse,
   IMRDetailResponse,
+  ICreateMRBody,
+  ICreateMRResp,
+  IBranchListResp,
 } from 'src/typings/respResult';
 import { PromiseAdapter, promiseFromEvent, parseQuery, parseCloneUrl } from 'src/common/utils';
 import { GitService } from 'src/common/gitService';
@@ -231,9 +234,8 @@ export class CodingServer {
 
   public static async getRepoParams() {
     const urls = await GitService.getRemoteURLs();
-    // TODO: multiple working repos
-    const url = urls?.[0];
-    return parseCloneUrl(url || ``);
+    const result = urls?.map((i) => parseCloneUrl(i || ``));
+    return result?.[0];
   }
 
   public async getMRList(repo?: string, status?: string): Promise<CodingResponse> {
@@ -329,7 +331,7 @@ export class CodingServer {
         throw new Error(`team not exist`);
       }
 
-      const diff: IMRDetailResponse = await got
+      const resp: IMRDetailResponse = await got
         .get(
           `https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.team}/project/${repoInfo.project}/depot/${repoInfo.repo}/git/merge/${iid}/detail`,
           {
@@ -340,11 +342,11 @@ export class CodingServer {
         )
         .json();
 
-      if (diff.code) {
-        return Promise.reject(diff);
+      if (resp.code) {
+        return Promise.reject(resp);
       }
 
-      return diff;
+      return resp;
     } catch (err) {
       return Promise.reject(err);
     }
@@ -358,18 +360,68 @@ export class CodingServer {
       }
 
       const url = `https://${repoInfo.team}.coding.net/p/${repoInfo.project}/d/${repoInfo.repo}/git/raw/${path}`;
-      const { body } = await got.get(
-        url,
-        {
-          searchParams: {
-            access_token: this._session?.accessToken,
-          },
+      const { body } = await got.get(url, {
+        searchParams: {
+          access_token: this._session?.accessToken,
         },
-      );
+      });
 
       return body;
     } catch (err) {
       return ``;
+    }
+  }
+
+  public async createMR(data: ICreateMRBody) {
+    try {
+      const repoInfo = this._context.workspaceState.get(`repoInfo`) as IRepoInfo;
+      if (!repoInfo?.team) {
+        throw new Error(`team not exist`);
+      }
+
+      const resp: ICreateMRResp = await got.post(
+        `https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.team}/project/${repoInfo.project}/depot/${repoInfo.repo}/git/merge`,
+        {
+          resolveBodyOnly: true,
+          responseType: `json`,
+          searchParams: {
+            access_token: this._session?.accessToken,
+          },
+          form: data,
+        },
+      );
+      if (resp.code) {
+        return Promise.reject(resp);
+      }
+      return resp;
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  public async getBranchList() {
+    try {
+      const repoInfo = this._context.workspaceState.get(`repoInfo`) as IRepoInfo;
+      if (!repoInfo?.team) {
+        throw new Error(`team not exist`);
+      }
+
+      const resp: IBranchListResp = await got
+        .get(
+          `https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.team}/project/${repoInfo.project}/depot/${repoInfo.repo}/git/list_branches`,
+          {
+            searchParams: {
+              access_token: this._session?.accessToken,
+            },
+          },
+        )
+        .json();
+      if (resp.code) {
+        return Promise.reject(resp);
+      }
+      return resp;
+    } catch (err) {
+      return Promise.reject(err);
     }
   }
 
