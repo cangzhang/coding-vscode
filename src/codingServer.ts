@@ -72,7 +72,7 @@ export class CodingServer {
         }
 
         Logger.error(`Error reading sessions: ${e}`);
-        await keychain.deleteToken(TokenType.AccessToken);
+        // await keychain.deleteToken(TokenType.AccessToken);
       }
     }
 
