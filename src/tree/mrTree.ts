@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
+import { TreeItemCollapsibleState } from 'vscode';
 import * as path from 'path';
 
 import { CodingServer } from '../codingServer';
-import { IRepoInfo, ISessionData } from '../typings/commonTypes';
+import { IRepoInfo, ISessionData, GitChangeType } from '../typings/commonTypes';
 import { IMRDiffStat, IMRData, IMRPathItem } from '../typings/respResult';
-
 import { getInMemMRContentProvider } from './inMemMRContentProvider';
 
 enum MRType {
@@ -20,6 +20,23 @@ enum ItemType {
   Node = `node`,
 }
 
+const getIcon = (name: string, theme: string) => path.join(__filename, `../../../src/assets/${theme}/${name}.png`);
+
+const FileModeIcons: { [key: string]: { light: string | vscode.Uri; dark: string | vscode.Uri } } = {
+  [GitChangeType.MODIFY]: {
+    dark: getIcon(`icon_m`, `dark`),
+    light: getIcon(`icon_m`, `light`),
+  },
+  [GitChangeType.ADD]: {
+    dark: getIcon(`icon_a`, `dark`),
+    light: getIcon(`icon_a`, `light`),
+  },
+  [GitChangeType.DELETE]: {
+    dark: getIcon(`icon_d`, `dark`),
+    light: getIcon(`icon_d`, `light`),
+  },
+};
+
 export interface IFileNode extends IMRPathItem {
   parentPath?: string;
   children?: IFileNode[];
@@ -30,9 +47,7 @@ export interface IFileNode extends IMRPathItem {
 type ITreeNode = string | number | IMRDiffStat | IFileNode | IMRData;
 
 export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITreeNode>> {
-  private _onDidChangeTreeData: vscode.EventEmitter<
-    ListItem<ITreeNode> | undefined | void
-  > = new vscode.EventEmitter<ListItem<ITreeNode> | undefined | void>();
+  private _onDidChangeTreeData: vscode.EventEmitter<ListItem<ITreeNode> | undefined | void> = new vscode.EventEmitter<ListItem<ITreeNode> | undefined | void>();
   readonly onDidChangeTreeData: vscode.Event<ListItem<ITreeNode> | undefined | void> = this
     ._onDidChangeTreeData.event;
   private _disposables: vscode.Disposable[];
@@ -77,17 +92,17 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
         new CategoryItem(
           MRType.Open.toUpperCase(),
           MRType.Open,
-          vscode.TreeItemCollapsibleState.Collapsed,
+          TreeItemCollapsibleState.Collapsed,
         ),
         new CategoryItem(
           MRType.Closed.toUpperCase(),
           MRType.Closed,
-          vscode.TreeItemCollapsibleState.Collapsed,
+          TreeItemCollapsibleState.Collapsed,
         ),
         new CategoryItem(
           MRType.All.toUpperCase(),
           MRType.All,
-          vscode.TreeItemCollapsibleState.Collapsed,
+          TreeItemCollapsibleState.Collapsed,
         ),
       ]);
     }
@@ -111,7 +126,7 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
                 new ListItem(
                   `0 merge requests in this category`,
                   `noData`,
-                  vscode.TreeItemCollapsibleState.None,
+                  TreeItemCollapsibleState.None,
                 ),
               ];
             }
@@ -125,7 +140,7 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
               return new MRItem(
                 i.title,
                 i,
-                vscode.TreeItemCollapsibleState.Collapsed,
+                TreeItemCollapsibleState.Collapsed,
                 this._context,
               );
             });
@@ -160,8 +175,9 @@ export class ListItem<T> extends vscode.TreeItem {
   constructor(
     public readonly label: string,
     public readonly value: T,
-    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+    public readonly collapsibleState: TreeItemCollapsibleState,
     public readonly command?: vscode.Command,
+    public readonly iconPath?: string | vscode.Uri | { light: string | vscode.Uri; dark: string | vscode.Uri } | vscode.ThemeIcon,
   ) {
     super(label, collapsibleState);
   }
@@ -178,18 +194,13 @@ export class CategoryItem extends ListItem<string> {
 export class MRItem extends ListItem<IMRData> {
   contextValue = ItemType.MRItem;
 
-  iconPath = {
-    light: path.join(__filename, '../../../src/assets/star.light.svg'),
-    dark: path.join(__filename, '../../../src/assets/star.dark.svg'),
-  };
-
   constructor(
     public readonly label: string,
     public readonly value: IMRData,
-    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+    public readonly collapsibleState: TreeItemCollapsibleState,
     public readonly context: vscode.ExtensionContext,
   ) {
-    super(label, value, collapsibleState);
+    super(label, value, collapsibleState, undefined, vscode.Uri.parse(value.author.avatar));
   }
 
   async getChildren(diffStat: IMRDiffStat): Promise<ListItem<string | number | IFileNode>[]> {
@@ -198,26 +209,32 @@ export class MRItem extends ListItem<IMRData> {
     const session = this.context.workspaceState.get(`session`, {}) as ISessionData;
 
     return [
-      new ListItem(`Description`, `mr-desc`, vscode.TreeItemCollapsibleState.None, {
-        command: 'codingPlugin.showMROverview',
-        title: `${this.value.iid} ${this.value.title}`,
-        arguments: [
-          {
-            type: `mr`,
-            iid: this.value.iid,
-            repoInfo,
-            accessToken: session?.accessToken,
-          },
-        ],
-      }),
+      new ListItem(
+        `Description`,
+        `mr-desc`,
+        TreeItemCollapsibleState.None,
+        {
+          command: 'codingPlugin.showMROverview',
+          title: `${this.value.iid} ${this.value.title}`,
+          arguments: [
+            {
+              type: `mr`,
+              iid: this.value.iid,
+              repoInfo,
+              accessToken: session?.accessToken,
+            },
+          ],
+        },
+        new vscode.ThemeIcon(`git-pull-request`),
+      ),
       ...files.map(
         (f) =>
           new FileNode(
             f.name,
             f,
             (f.children || [])?.length > 0
-              ? vscode.TreeItemCollapsibleState.Expanded
-              : vscode.TreeItemCollapsibleState.None,
+              ? TreeItemCollapsibleState.Expanded
+              : TreeItemCollapsibleState.None,
           ),
       ),
     ];
@@ -281,24 +298,33 @@ export class FileNode extends ListItem<IFileNode> {
   constructor(
     public readonly label: string,
     public readonly value: IFileNode,
-    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+    public readonly collapsibleState: TreeItemCollapsibleState,
   ) {
     super(
       label,
       value,
       collapsibleState,
-      collapsibleState === vscode.TreeItemCollapsibleState.None
+      collapsibleState === TreeItemCollapsibleState.None
         ? {
-            command: `codingPlugin.showDiff`,
-            title: ``,
-            arguments: [value],
-          }
+          command: `codingPlugin.showDiff`,
+          title: ``,
+          arguments: [value],
+        }
         : undefined,
+      FileNode.getFileIcon(value.changeType, collapsibleState),
     );
   }
 
+  static getFileIcon(changeType: GitChangeType, collapsibleState: TreeItemCollapsibleState) {
+    if (collapsibleState !== TreeItemCollapsibleState.None) {
+      return undefined;
+    }
+
+    return FileModeIcons[changeType];
+  }
+
   public makeTree() {
-    if (this.collapsibleState === vscode.TreeItemCollapsibleState.None) {
+    if (this.collapsibleState === TreeItemCollapsibleState.None) {
       return;
     }
     this.children = (this.value.children || [])?.map(
@@ -307,8 +333,8 @@ export class FileNode extends ListItem<IFileNode> {
           f.name,
           f,
           (f.children || [])?.length > 0
-            ? vscode.TreeItemCollapsibleState.Expanded
-            : vscode.TreeItemCollapsibleState.None,
+            ? TreeItemCollapsibleState.Expanded
+            : TreeItemCollapsibleState.None,
         ),
     );
   }

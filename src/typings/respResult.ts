@@ -27,6 +27,12 @@ export interface IMRData {
   id: number;
   iid: number;
   title: string;
+  merge_status: string;
+  path: string;
+  author: UserResponse;
+  action_author: UserResponse;
+  created_at: number;
+  updated_at: number;
 }
 
 export interface CodingResponse {

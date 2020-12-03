@@ -13,11 +13,6 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.window.showInformationMessage(`Please open a repo hosted by coding.net.`);
   } else {
     context.workspaceState.update(`repoInfo`, repoInfo);
-    if (repoInfo?.project && repoInfo?.repo) {
-      vscode.window.showInformationMessage(
-        `CODING: current repo is ${repoInfo?.project}/${repoInfo?.repo}`,
-      );
-    }
   }
 
   const codingSrv = new CodingServer(context);
