@@ -1,6 +1,9 @@
 import * as vscode from 'vscode';
 
 import { getNonce } from 'src/common/utils';
+import { IReplyMessage, IRequestMessage } from 'src/typings/message';
+import { CodingServer } from 'src/codingServer';
+import { formatErrorMessage } from 'src/utils/error';
 
 export class Panel {
   /**
@@ -11,11 +14,12 @@ export class Panel {
   public static readonly viewType = 'codingPlugin';
 
   private readonly _panel: vscode.WebviewPanel;
+  private readonly _codingSrv: CodingServer;
   private readonly _extensionUri: vscode.Uri;
   private readonly _extensionPath: string;
   private _disposables: vscode.Disposable[] = [];
 
-  public static createOrShow(context: vscode.ExtensionContext) {
+  public static createOrShow(context: vscode.ExtensionContext, codingSrv: CodingServer) {
     const { extensionUri, extensionPath } = context;
     const column = vscode.window.activeTextEditor
       ? vscode.window.activeTextEditor.viewColumn
@@ -40,19 +44,26 @@ export class Panel {
       },
     );
 
-    Panel.currentPanel = new Panel(panel, extensionUri, extensionPath);
+    Panel.currentPanel = new Panel(panel, codingSrv, extensionUri, extensionPath);
   }
 
   public static revive(
     panel: vscode.WebviewPanel,
+    codingSrv: CodingServer,
     extensionUri: vscode.Uri,
     extensionPath: string,
   ) {
-    Panel.currentPanel = new Panel(panel, extensionUri, extensionPath);
+    Panel.currentPanel = new Panel(panel, codingSrv, extensionUri, extensionPath);
   }
 
-  private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, extensionPath: string) {
+  private constructor(
+    panel: vscode.WebviewPanel,
+    codingSrv: CodingServer,
+    extensionUri: vscode.Uri,
+    extensionPath: string,
+  ) {
     this._panel = panel;
+    this._codingSrv = codingSrv;
     this._extensionUri = extensionUri;
     this._extensionPath = extensionPath;
 
@@ -76,16 +87,62 @@ export class Panel {
 
     // Handle messages from the webview
     this._panel.webview.onDidReceiveMessage(
-      (message) => {
-        switch (message.command) {
-          case 'alert':
-            vscode.window.showErrorMessage(message.text);
-            return;
+      async (message: IRequestMessage<any>) => {
+        const { command, args } = message;
+        try {
+          switch (command) {
+            case 'alert':
+              vscode.window.showErrorMessage(args);
+              return;
+            case 'mr.close':
+              await this._codingSrv.closeMR(args);
+              this.replyMessage(message);
+              break;
+            case 'mr.approve':
+              await this._codingSrv.approveMR(args);
+              this.replyMessage(message);
+              break;
+            case 'mr.disapprove':
+              await this._codingSrv.disapproveMR(args);
+              this.replyMessage(message);
+              break;
+            case 'mr.merge':
+              await this._codingSrv.mergeMR(args);
+              this.replyMessage(message);
+              break;
+            case 'mr.update.title':
+              await this._codingSrv.updateMRTitle(args.iid, args.title);
+              this.replyMessage(message);
+              break;
+            case 'mr.add.comment':
+              const result = await this._codingSrv.commentMR(args.id, args.comment);
+              this.replyMessage(message, result.data);
+              break;
+          }
+        } catch (err) {
+          this.throwError(message, err.msg);
+          vscode.window.showErrorMessage(formatErrorMessage(err.msg));
         }
       },
       null,
       this._disposables,
     );
+  }
+
+  public replyMessage(originalMessage: IRequestMessage<any>, message?: any) {
+    const reply: IReplyMessage = {
+      seq: originalMessage.req,
+      res: message,
+    };
+    this._panel.webview.postMessage(reply);
+  }
+
+  public throwError(originalMessage: IRequestMessage<any>, error: any) {
+    const reply: IReplyMessage = {
+      seq: originalMessage.req,
+      err: error,
+    };
+    this._panel.webview.postMessage(reply);
   }
 
   public doRefactor() {
@@ -94,10 +151,10 @@ export class Panel {
     this._panel.webview.postMessage({ command: 'refactor' });
   }
 
-  public broadcast(type: string, value: any) {
+  public broadcast(command: string, res: any) {
     this._panel.webview.postMessage({
-      type,
-      value,
+      command,
+      res,
     });
   }
 
@@ -161,4 +218,3 @@ export class Panel {
 		  </html>`;
   }
 }
-

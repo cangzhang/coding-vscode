@@ -16,6 +16,7 @@ export interface AuthFailResult {
 }
 
 export interface UserResponse {
+  id: number;
   avatar: string;
   global_key: string;
   name: string;
@@ -82,7 +83,7 @@ export interface IMRDiffResponse extends CodingResponse {
   };
 }
 
-export interface IMRDetail {
+export interface IMRDetailMR {
   merged_sha: string;
   body: string;
   body_plan: string;
@@ -103,14 +104,18 @@ export interface IMRDetail {
   comment_count: string;
   reminded: string;
   author: {
+    id: number;
     avatar: string;
     name: string;
     global_key: string;
+    path: string;
   };
   action_author: {
+    id: number;
     avatar: string;
     name: string;
     global_key: string;
+    path: string;
   };
   depot: {
     id: number;
@@ -121,9 +126,51 @@ export interface IMRDetail {
   };
 }
 
+export interface IMRDetail {
+  merge_request: IMRDetailMR;
+  can_merge: boolean;
+}
+
 export interface IMRDetailResponse extends CodingResponse {
-  data: {
-    merge_request: IMRDetail;
-    can_merge: boolean;
+  data: IMRDetail;
+}
+
+export interface IActivity {
+  action: string;
+  created_at: number;
+  id: number;
+  author: UserResponse;
+  comment?: {
+    commits: any[];
   };
+}
+
+export interface IMRActivitiesResponse extends CodingResponse {
+  data: IActivity[];
+}
+
+export interface IReviewer {
+  reviewer: UserResponse;
+  value: number;
+  volunteer: string;
+}
+
+export interface IMRReviewersResponse extends CodingResponse {
+  data: {
+    volunteer_reviewers: IReviewer[];
+    reviewers: IReviewer[];
+  };
+}
+
+export interface IComment {
+  author: UserResponse;
+  childComments?: IComment[];
+  content: string;
+  created_at: number;
+  hasResourceReference: boolean;
+  id: number;
+  noteable_id: number;
+  noteable_type: string;
+  outdated: boolean;
+  parentId: number;
 }

@@ -9,6 +9,8 @@ import {
   IRepoListResponse,
   IMRDiffResponse,
   IMRDetailResponse,
+  IMRActivitiesResponse,
+  IMRReviewersResponse,
 } from 'src/typings/respResult';
 import { PromiseAdapter, promiseFromEvent, parseQuery, parseCloneUrl } from 'src/common/utils';
 import { GitService } from 'src/common/gitService';
@@ -38,7 +40,7 @@ export class CodingServer {
   private _pendingStates = new Map<string, string[]>();
   private _codeExchangePromises = new Map<string, Promise<AuthSuccessResult>>();
 
-  private _loggedIn: boolean = false;
+  private _loggedIn = false;
   private _context: vscode.ExtensionContext;
   private _session: ISessionData | null = null;
 
@@ -236,6 +238,14 @@ export class CodingServer {
     return parseCloneUrl(url || ``);
   }
 
+  public getApiPrefix() {
+    const repoInfo = this._context.workspaceState.get(`repoInfo`) as IRepoInfo;
+    if (!repoInfo?.team) {
+      throw new Error(`team not exist`);
+    }
+    return `https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.team}/project/${repoInfo.project}/depot/${repoInfo.repo}`;
+  }
+
   public async getMRList(repo?: string, status?: string): Promise<CodingResponse> {
     try {
       const repoInfo = this._context.workspaceState.get(`repoInfo`) as IRepoInfo;
@@ -298,20 +308,13 @@ export class CodingServer {
 
   public async getMRDiff(iid: number) {
     try {
-      const repoInfo = this._context.workspaceState.get(`repoInfo`) as IRepoInfo;
-      if (!repoInfo?.team) {
-        throw new Error(`team not exist`);
-      }
-
+      const url = this.getApiPrefix();
       const diff: IMRDiffResponse = await got
-        .get(
-          `https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.team}/project/${repoInfo.project}/depot/${repoInfo.repo}/git/merge/${iid}/diff`,
-          {
-            searchParams: {
-              access_token: this._session?.accessToken,
-            },
+        .get(`${url}/git/merge/${iid}/diff`, {
+          searchParams: {
+            access_token: this._session?.accessToken,
           },
-        )
+        })
         .json();
       if (diff.code) {
         return Promise.reject(diff);
@@ -324,20 +327,13 @@ export class CodingServer {
 
   public async getMRDetail(iid: string) {
     try {
-      const repoInfo = this._context.workspaceState.get(`repoInfo`) as IRepoInfo;
-      if (!repoInfo?.team) {
-        throw new Error(`team not exist`);
-      }
-
+      const url = this.getApiPrefix();
       const diff: IMRDetailResponse = await got
-        .get(
-          `https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.team}/project/${repoInfo.project}/depot/${repoInfo.repo}/git/merge/${iid}/detail`,
-          {
-            searchParams: {
-              access_token: this._session?.accessToken,
-            },
+        .get(`${url}/git/merge/${iid}/detail`, {
+          searchParams: {
+            access_token: this._session?.accessToken,
           },
-        )
+        })
         .json();
 
       if (diff.code) {
@@ -345,6 +341,203 @@ export class CodingServer {
       }
 
       return diff;
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  public async getMRActivities(iid: string) {
+    try {
+      const url = this.getApiPrefix();
+      const result: IMRActivitiesResponse = await got
+        .get(`${url}/git/merge/${iid}/activities`, {
+          searchParams: {
+            access_token: this._session?.accessToken,
+          },
+        })
+        .json();
+
+      if (result.code) {
+        return Promise.reject(result);
+      }
+      return result;
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  public async getMRReviewers(iid: string) {
+    try {
+      const url = this.getApiPrefix();
+      const result: IMRReviewersResponse = await got
+        .get(`${url}/git/merge/${iid}/reviewers`, {
+          searchParams: {
+            access_token: this._session?.accessToken,
+          },
+        })
+        .json();
+
+      if (result.code) {
+        return Promise.reject(result);
+      }
+      return result;
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  public async getMRComments(iid: string) {
+    try {
+      const url = this.getApiPrefix();
+      const result: CodingResponse = await got
+        .get(`${url}/git/merge/${iid}/comments`, {
+          searchParams: {
+            access_token: this._session?.accessToken,
+          },
+        })
+        .json();
+
+      if (result.code) {
+        return Promise.reject(result);
+      }
+      return result;
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  public async closeMR(iid: string) {
+    try {
+      const url = this.getApiPrefix();
+      const result: CodingResponse = await got
+        .post(`${url}/git/merge/${iid}/refuse`, {
+          searchParams: {
+            access_token: this._session?.accessToken,
+          },
+        })
+        .json();
+
+      if (result.code) {
+        return Promise.reject(result);
+      }
+      return result;
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  public async approveMR(iid: string) {
+    try {
+      const url = this.getApiPrefix();
+      const result: CodingResponse = await got
+        .post(`${url}/git/merge/${iid}/good`, {
+          searchParams: {
+            access_token: this._session?.accessToken,
+          },
+        })
+        .json();
+
+      if (result.code) {
+        return Promise.reject(result);
+      }
+      return result;
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  public async disapproveMR(iid: string) {
+    try {
+      const url = this.getApiPrefix();
+      const result: CodingResponse = await got
+        .delete(`${url}/git/merge/${iid}/good`, {
+          searchParams: {
+            access_token: this._session?.accessToken,
+          },
+        })
+        .json();
+
+      if (result.code) {
+        return Promise.reject(result);
+      }
+      return result;
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  public async mergeMR(iid: string) {
+    try {
+      const url = this.getApiPrefix();
+      const result: CodingResponse = await got
+        .post(`${url}/git/merge/${iid}/merge`, {
+          searchParams: {
+            access_token: this._session?.accessToken,
+          },
+          headers: {
+            'content-type': 'application/x-www-form-urlencoded;charset=UTF-8',
+          },
+        })
+        .json();
+
+      if (result.code) {
+        return Promise.reject(result);
+      }
+      return result;
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  public async updateMRTitle(iid: string, title: string) {
+    try {
+      const url = this.getApiPrefix();
+      const result: CodingResponse = await got
+        .put(`${url}/git/merge/${iid}/update-title`, {
+          searchParams: {
+            access_token: this._session?.accessToken,
+            title,
+          },
+          headers: {
+            'content-type': 'application/x-www-form-urlencoded;charset=UTF-8',
+          },
+        })
+        .json();
+
+      if (result.code) {
+        return Promise.reject(result);
+      }
+      return result;
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  public async commentMR(mrId: number, comment: string) {
+    try {
+      const url = this.getApiPrefix();
+      const result: CodingResponse = await got
+        .post(`${url}/git/line_notes`, {
+          searchParams: {
+            access_token: this._session?.accessToken,
+            line: 0,
+            change_type: 0,
+            position: 0,
+            content: comment,
+            noteable_type: 'MergeRequestBean',
+            noteable_id: mrId,
+            parent_id: 0,
+          },
+          headers: {
+            'content-type': 'application/x-www-form-urlencoded;charset=UTF-8',
+          },
+        })
+        .json();
+
+      if (result.code) {
+        return Promise.reject(result);
+      }
+      return result;
     } catch (err) {
       return Promise.reject(err);
     }
@@ -358,14 +551,11 @@ export class CodingServer {
       }
 
       const url = `https://${repoInfo.team}.coding.net/p/${repoInfo.project}/d/${repoInfo.repo}/git/raw/${path}`;
-      const { body } = await got.get(
-        url,
-        {
-          searchParams: {
-            access_token: this._session?.accessToken,
-          },
+      const { body } = await got.get(url, {
+        searchParams: {
+          access_token: this._session?.accessToken,
         },
-      );
+      });
 
       return body;
     } catch (err) {
