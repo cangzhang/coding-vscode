@@ -42,7 +42,7 @@ function Comment({ comment }: IProps) {
   const renderChildComments = () => {
     return comment.childComments?.map((c) => {
       return (
-        <ChildComment>
+        <ChildComment key={c.id}>
           <AuthorLink for={c.author} />
           <ChildCommentContent>
             <div dangerouslySetInnerHTML={{ __html: c.content }} />

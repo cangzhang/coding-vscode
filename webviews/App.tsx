@@ -24,7 +24,9 @@ const TitleWrapper = styled.div`
 const Row = styled.div`
   display: flex;
   align-items: center;
-  margin: 16px 0;
+  margin: 16px 0 0;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--vscode-list-inactiveSelectionBackground);
 `;
 const Desc = styled.article`
   border: 1px solid gray;
@@ -39,6 +41,15 @@ const Body = styled.div`
 const Sidebar = styled.div`
   width: 200px;
   margin-left: 20px;
+`;
+const EditBtn = styled.span`
+  width: 16px;
+  height: 16px;
+  margin-left: 10px;
+  cursor: pointer;
+`;
+const Empty = styled.div`
+  text-align: center;
 `;
 
 function App() {
@@ -56,9 +67,10 @@ function App() {
   const { repoInfo, data } = currentMR;
   const { merge_request: mergeRequest } = data;
 
-  const handleKeyDown = (event: any) => {
+  const handleKeyDown = async (event: any) => {
     if (event.key === 'Enter') {
-      updateMRTitle(title);
+      await updateMRTitle(title);
+      setEditing(false);
     }
   };
 
@@ -97,9 +109,11 @@ function App() {
               #{currentMR.iid}
             </a>
             )
-            <span className='edit' onClick={handleEdit}>
-              编辑
-            </span>
+            <EditBtn
+              className='edit'
+              onClick={handleEdit}
+              dangerouslySetInnerHTML={{ __html: require('./assets/edit.svg') }}
+            />
           </>
         )}
       </TitleWrapper>
@@ -109,10 +123,15 @@ function App() {
       </Row>
       <BodyWrap>
         <Body>
-          <h3>Description:</h3>
+          <h3>Description</h3>
           <Desc>
-            <div dangerouslySetInnerHTML={{ __html: mergeRequest?.body }} />
+            {mergeRequest?.body ? (
+              <div dangerouslySetInnerHTML={{ __html: mergeRequest?.body }} />
+            ) : (
+              <Empty>Empty</Empty>
+            )}
           </Desc>
+          <h3>Activities</h3>
           <Activities />
         </Body>
         <Sidebar>

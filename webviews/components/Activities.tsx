@@ -30,10 +30,9 @@ function Activities() {
     );
   };
 
-  const allActivities = [...activities.map((i) => [i]), ...comments];
-  allActivities.sort((a, b) => {
-    return a[0].created_at - b[0].create_at;
-  });
+  const allActivities = [...activities.map((i) => [i]), ...comments].sort(
+    (a, b) => a[0].created_at - b[0].created_at,
+  );
 
   return (
     <div>

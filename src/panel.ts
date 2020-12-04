@@ -115,8 +115,12 @@ export class Panel {
               this.replyMessage(message);
               break;
             case 'mr.add.comment':
-              const result = await this._codingSrv.commentMR(args.id, args.comment);
-              this.replyMessage(message, result.data);
+              const commentRes = await this._codingSrv.commentMR(args.id, args.comment);
+              this.replyMessage(message, commentRes.data);
+              break;
+            case 'mr.get.activities':
+              const getActivitiesRes = await this._codingSrv.getMRActivities(args);
+              this.replyMessage(message, getActivitiesRes.data);
               break;
           }
         } catch (err) {

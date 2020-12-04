@@ -4,7 +4,7 @@ import { IMRDetailMR } from 'src/typings/respResult';
 
 const Link = styled.a`
   position: relative;
-  top: 1px;
+  top: 2px;
 `;
 const AvatarImg = styled.img`
   width: 24px;

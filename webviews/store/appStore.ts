@@ -34,12 +34,21 @@ const appStore = store({
   updateMRStatus(status: MERGE_STATUS) {
     appStore.currentMR.data.merge_request.merge_status = status;
   },
+  async refetchMRActivities() {
+    const result = await messageHandler.postMessage({
+      command: actions.MR_GET_ACTIVITIES,
+      args: appStore.currentMR.iid,
+    });
+    appStore.activities = result;
+    return result;
+  },
   async closeMR() {
     const result = await messageHandler.postMessage({
       command: actions.CLOSE_MR,
       args: appStore.currentMR.iid,
     });
     appStore.updateMRStatus(MERGE_STATUS.REFUSED);
+    appStore.refetchMRActivities();
     return result;
   },
   async approveMR() {
@@ -53,6 +62,7 @@ const appStore = store({
     if (index >= 0) {
       appStore.reviewers.reviewers[index].value = 100;
     }
+    appStore.refetchMRActivities();
     return result;
   },
   async disapproveMR() {
@@ -66,6 +76,7 @@ const appStore = store({
     if (index >= 0) {
       appStore.reviewers.reviewers[index].value = 0;
     }
+    appStore.refetchMRActivities();
     return result;
   },
   async mergeMR() {
@@ -74,6 +85,7 @@ const appStore = store({
       args: appStore.currentMR.iid,
     });
     appStore.updateMRStatus(MERGE_STATUS.ACCEPTED);
+    appStore.refetchMRActivities();
     return result;
   },
   async updateMRTitle(newTitle: string) {
@@ -85,6 +97,7 @@ const appStore = store({
       },
     });
     appStore.currentMR.data.merge_request.title = newTitle;
+    appStore.refetchMRActivities();
     return result;
   },
   async commentMR(comment: string) {
@@ -95,7 +108,6 @@ const appStore = store({
         comment,
       },
     });
-    console.log('result => ', result);
     appStore.comments.push([result] as any);
     return result;
   },
@@ -113,7 +125,7 @@ export const persistData = () =>
   });
 export const removeDataPersist = (e: () => void) => clearEffect(e);
 
-// broadcast message
+// handle broadcast message
 export const messageHandler = getMessageHandler((message: any) => {
   if (!message) return;
   const { updateCurrentMR, updateMRActivities, updateMRReviewers, updateMRComments } = appStore;
