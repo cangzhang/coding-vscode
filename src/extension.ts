@@ -5,7 +5,7 @@ import { uriHandler, CodingServer } from 'src/codingServer';
 import { Panel } from 'src/panel';
 import { IFileNode, MRTreeDataProvider } from 'src/tree/mrTree';
 import { ReleaseTreeDataProvider } from 'src/tree/releaseTree';
-import { IRepoInfo, IMRWebViewDetail } from 'src/typings/commonTypes';
+import { IRepoInfo, IMRWebViewDetail, ISessionData } from 'src/typings/commonTypes';
 
 export async function activate(context: vscode.ExtensionContext) {
   const repoInfo = await CodingServer.getRepoParams();
@@ -44,12 +44,22 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(vscode.window.registerUriHandler(uriHandler));
   context.subscriptions.push(
     vscode.commands.registerCommand('codingPlugin.showMROverview', async (mr: IMRWebViewDetail) => {
-      Panel.createOrShow(context);
-      const resp = await codingSrv.getMRDetail(mr.iid);
-      mr.data = resp.data.merge_request;
-      Panel.currentPanel?.broadcast(`action.UPDATE_CURRENT_MR`, {
-        ...mr,
-        data: resp.data.merge_request,
+      Panel.createOrShow(context, codingSrv);
+      codingSrv.getMRDetail(mr.iid).then((detailResp) => {
+        Panel.currentPanel?.broadcast(`UPDATE_CURRENT_MR`, {
+          ...mr,
+          data: detailResp.data,
+          user: context.workspaceState.get(`session`, {} as ISessionData)?.user,
+        });
+      });
+      codingSrv.getMRActivities(mr.iid).then((activityResp) => {
+        Panel.currentPanel?.broadcast(`UPDATE_MR_ACTIVITIES`, activityResp.data);
+      });
+      codingSrv.getMRReviewers(mr.iid).then((reviewerResp) => {
+        Panel.currentPanel?.broadcast(`mr.update.reviewers`, reviewerResp.data);
+      });
+      codingSrv.getMRComments(mr.iid).then((commentResp) => {
+        Panel.currentPanel?.broadcast(`mr.udpate.comments`, commentResp.data);
       });
     }),
   );
@@ -125,11 +135,10 @@ export async function activate(context: vscode.ExtensionContext) {
     // Make sure we register a serializer in activation event
     vscode.window.registerWebviewPanelSerializer(Panel.viewType, {
       async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: any) {
-        Panel.revive(webviewPanel, context.extensionUri, context.extensionPath);
+        Panel.revive(webviewPanel, codingSrv, context.extensionUri, context.extensionPath);
       },
     });
   }
 }
 
-export function deactivate() {
-}
+export function deactivate() {}

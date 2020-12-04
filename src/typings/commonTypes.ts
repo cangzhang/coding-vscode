@@ -26,7 +26,7 @@ export enum GitChangeType {
   RENAME = `RENAME`,
   TYPE = `TYPE`,
   UNKNOWN = `UNKNOWN`,
-  UNMERGED = `UNMERGED`
+  UNMERGED = `UNMERGED`,
 }
 
 export interface IMRWebViewDetail {
@@ -35,4 +35,5 @@ export interface IMRWebViewDetail {
   accessToken: string;
   repoInfo: IRepoInfo;
   data: IMRDetail;
+  user: UserResponse;
 }

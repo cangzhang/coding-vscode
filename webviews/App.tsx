@@ -1,41 +1,51 @@
-import React, { useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
 
 import { view } from '@risingstack/react-easy-state';
 import appStore from 'webviews/store/appStore';
-import { actions } from 'webviews/store/constants';
 import persistDataHook from 'webviews/hooks/persistDataHook';
+import Activities from 'webviews/components/Activities';
+import Reviewers from 'webviews/components/Reviewers';
 
 const LoadingWrapper = styled.div`
   font-size: 16px;
 `;
 const TitleWrapper = styled.div`
+  display: flex;
+  align-items: center;
   font-size: 20px;
+  .edit {
+    display: none;
+  }
+  &:hover .edit {
+    display: block;
+  }
 `;
 const Row = styled.div`
+  display: flex;
+  align-items: center;
   margin: 16px 0;
 `;
 const Desc = styled.article`
   border: 1px solid gray;
   padding: 10px;
 `;
+const BodyWrap = styled.div`
+  display: flex;
+`;
+const Body = styled.div`
+  flex: 1;
+`;
+const Sidebar = styled.div`
+  width: 200px;
+  margin-left: 20px;
+`;
 
 function App() {
-  const { currentMR, updateCurrentMR } = appStore;
-
-  useEffect(() => {
-    window.addEventListener(`message`, async (ev) => {
-      const { type, value } = ev.data;
-      switch (type) {
-        case actions.UPDATE_CURRENT_MR: {
-          updateCurrentMR(value);
-          break;
-        }
-        default:
-          break;
-      }
-    });
-  }, [updateCurrentMR]);
+  const { currentMR, updateMRTitle } = appStore;
+  const [isEditing, setEditing] = useState(false);
+  const [title, setTitle] = useState(currentMR?.data?.merge_request?.title);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   persistDataHook();
 
@@ -44,19 +54,71 @@ function App() {
   }
 
   const { repoInfo, data } = currentMR;
+  const { merge_request: mergeRequest } = data;
+
+  const handleKeyDown = (event: any) => {
+    if (event.key === 'Enter') {
+      updateMRTitle(title);
+    }
+  };
+
+  const handleTitleChange = (event: any) => {
+    const { value } = event.target;
+    if (!value) {
+      setTitle(mergeRequest?.title);
+    } else {
+      setTitle(value);
+    }
+  };
+
+  const handleEdit = () => {
+    setEditing(true);
+    inputRef.current?.focus();
+  };
+
   return (
     <div>
       <TitleWrapper>
-        {data.title} (<a
-        href={`https://${repoInfo.team}.coding.net/p/${repoInfo.project}/d/${repoInfo.repo}/git/merge/${currentMR.iid}`}>#{currentMR.iid}</a>)
+        {isEditing ? (
+          <input
+            type='text'
+            value={title}
+            ref={(ref) => (inputRef.current = ref)}
+            onBlur={() => setEditing(false)}
+            onFocus={() => setEditing(true)}
+            onKeyDown={handleKeyDown}
+            onChange={handleTitleChange}
+          />
+        ) : (
+          <>
+            {mergeRequest?.title} (
+            <a
+              href={`https://${repoInfo.team}.coding.net/p/${repoInfo.project}/d/${repoInfo.repo}/git/merge/${currentMR.iid}`}>
+              #{currentMR.iid}
+            </a>
+            )
+            <span className='edit' onClick={handleEdit}>
+              编辑
+            </span>
+          </>
+        )}
       </TitleWrapper>
       <Row>
-        <code>{data.srcBranch}</code> → <code>{data.desBranch}</code>
+        <div id='status'>{mergeRequest?.merge_status}</div>
+        <code>{mergeRequest?.srcBranch}</code> → <code>{mergeRequest?.desBranch}</code>
       </Row>
-      <h3>Description:</h3>
-      <Desc>
-        <div dangerouslySetInnerHTML={{ __html: data.body }} />
-      </Desc>
+      <BodyWrap>
+        <Body>
+          <h3>Description:</h3>
+          <Desc>
+            <div dangerouslySetInnerHTML={{ __html: mergeRequest?.body }} />
+          </Desc>
+          <Activities />
+        </Body>
+        <Sidebar>
+          <Reviewers />
+        </Sidebar>
+      </BodyWrap>
     </div>
   );
 }
