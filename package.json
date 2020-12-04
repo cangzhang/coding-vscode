@@ -133,6 +133,7 @@
   },
   "dependencies": {
     "@risingstack/react-easy-state": "^6.3.0",
+    "dayjs": "^1.9.6",
     "got": "^11.7.0",
     "keytar": "^7.0.0",
     "module-alias": "^2.2.2",

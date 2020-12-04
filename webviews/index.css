@@ -13,3 +13,65 @@ code {
 #root {
   padding: 1em;
 }
+
+textarea,
+input[type='text'] {
+  display: block;
+  box-sizing: border-box;
+  padding: 10px;
+  width: 100%;
+  resize: vertical;
+  font-size: 13px;
+  border: 1px solid var(--vscode-dropdown-border);
+  background-color: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  font-family: var(--vscode-editor-font-family);
+}
+
+textarea {
+  min-height: 100px;
+  max-height: 500px;
+}
+
+textarea:focus {
+  outline: 1px solid var(--vscode-focusBorder);
+}
+
+button {
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border-radius: 0px;
+  border: 1px solid transparent;
+  outline: none;
+  padding: 4px 12px;
+  font-size: 13px;
+  line-height: 18px;
+  white-space: nowrap;
+  user-select: none;
+  cursor: pointer;
+  opacity: 0.9;
+}
+
+button:hover {
+  opacity: 1;
+}
+
+button.secondary {
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+#status {
+  box-sizing: border-box;
+  line-height: 18px;
+  background: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+  border-radius: 4px;
+  padding: 2px 8px;
+  margin-right: 12px;
+}
