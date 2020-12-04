@@ -15,6 +15,7 @@ const Header = styled.div`
   align-items: center;
   border: 1px solid var(--vscode-list-inactiveSelectionBackground);
   background: var(--vscode-list-inactiveSelectionBackground);
+  padding: 5px 10px;
 `;
 const AuthorLinkWrap = styled.div`
   margin-left: 5px;
@@ -25,7 +26,7 @@ const Body = styled.div`
   border-top: none;
 `;
 const Time = styled.div`
-  margin-left: 20px;
+  margin-left: 15px;
 `;
 
 const ChildComment = styled.div`
@@ -41,7 +42,7 @@ function Comment({ comment }: IProps) {
   const renderChildComments = () => {
     return comment.childComments?.map((c) => {
       return (
-        <ChildComment>
+        <ChildComment key={c.id}>
           <AuthorLink for={c.author} />
           <ChildCommentContent>
             <div dangerouslySetInnerHTML={{ __html: c.content }} />

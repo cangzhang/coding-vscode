@@ -2,15 +2,20 @@ import * as React from 'react';
 import styled from 'styled-components';
 import { IMRDetailMR } from 'src/typings/respResult';
 
+const Link = styled.a`
+  position: relative;
+  top: 2px;
+`;
 const AvatarImg = styled.img`
   width: 24px;
   height: 24px;
+  border-radius: 50%;
 `;
 
 export const Avatar = ({ for: author }: { for: Partial<IMRDetailMR['author']> }) => (
-  <a href={author.avatar}>
+  <Link href={author.avatar}>
     <AvatarImg src={author.avatar} alt='' />
-  </a>
+  </Link>
 );
 
 export const AuthorLink = ({ for: author }: { for: IMRDetailMR['author'] }) => (
