@@ -20,9 +20,12 @@ enum ItemType {
   Node = `node`,
 }
 
-const getIcon = (name: string, theme: string) => path.join(__filename, `../../../src/assets/${theme}/${name}.png`);
+const getIcon = (name: string, theme: string) =>
+  path.join(__filename, `../../../src/assets/${theme}/${name}.png`);
 
-const FileModeIcons: { [key: string]: { light: string | vscode.Uri; dark: string | vscode.Uri } } = {
+const FileModeIcons: {
+  [key: string]: { light: string | vscode.Uri; dark: string | vscode.Uri };
+} = {
   [GitChangeType.MODIFY]: {
     dark: getIcon(`icon_m`, `dark`),
     light: getIcon(`icon_m`, `light`),
@@ -47,7 +50,9 @@ export interface IFileNode extends IMRPathItem {
 type ITreeNode = string | number | IMRDiffStat | IFileNode | IMRData;
 
 export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITreeNode>> {
-  private _onDidChangeTreeData: vscode.EventEmitter<ListItem<ITreeNode> | undefined | void> = new vscode.EventEmitter<ListItem<ITreeNode> | undefined | void>();
+  private _onDidChangeTreeData: vscode.EventEmitter<
+    ListItem<ITreeNode> | undefined | void
+  > = new vscode.EventEmitter<ListItem<ITreeNode> | undefined | void>();
   readonly onDidChangeTreeData: vscode.Event<ListItem<ITreeNode> | undefined | void> = this
     ._onDidChangeTreeData.event;
   private _disposables: vscode.Disposable[];
@@ -78,7 +83,7 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
 
   getChildren(element?: ListItem<ITreeNode>): Thenable<ListItem<ITreeNode>[]> {
     if (!this._service.loggedIn) {
-      vscode.window.showErrorMessage(`[MR Tree] auth expired.`);
+      vscode.window.showErrorMessage(`[MR Tree] Invalid credentials.`);
       return Promise.resolve([]);
     }
 
@@ -99,11 +104,7 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
           MRType.Closed,
           TreeItemCollapsibleState.Collapsed,
         ),
-        new CategoryItem(
-          MRType.All.toUpperCase(),
-          MRType.All,
-          TreeItemCollapsibleState.Collapsed,
-        ),
+        new CategoryItem(MRType.All.toUpperCase(), MRType.All, TreeItemCollapsibleState.Collapsed),
       ]);
     }
 
@@ -137,12 +138,7 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
             }
 
             return list.map((i: IMRData) => {
-              return new MRItem(
-                i.title,
-                i,
-                TreeItemCollapsibleState.Collapsed,
-                this._context,
-              );
+              return new MRItem(i.title, i, TreeItemCollapsibleState.Collapsed, this._context);
             });
           })
           .catch(() => {
@@ -177,7 +173,11 @@ export class ListItem<T> extends vscode.TreeItem {
     public readonly value: T,
     public readonly collapsibleState: TreeItemCollapsibleState,
     public readonly command?: vscode.Command,
-    public readonly iconPath?: string | vscode.Uri | { light: string | vscode.Uri; dark: string | vscode.Uri } | vscode.ThemeIcon,
+    public readonly iconPath?:
+      | string
+      | vscode.Uri
+      | { light: string | vscode.Uri; dark: string | vscode.Uri }
+      | vscode.ThemeIcon,
   ) {
     super(label, collapsibleState);
   }
@@ -306,10 +306,10 @@ export class FileNode extends ListItem<IFileNode> {
       collapsibleState,
       collapsibleState === TreeItemCollapsibleState.None
         ? {
-          command: `codingPlugin.showDiff`,
-          title: ``,
-          arguments: [value],
-        }
+            command: `codingPlugin.showDiff`,
+            title: ``,
+            arguments: [value],
+          }
         : undefined,
       FileNode.getFileIcon(value.changeType, collapsibleState),
     );

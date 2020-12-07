@@ -77,8 +77,13 @@
     "viewsWelcome": [
       {
         "view": "mrTreeView",
-        "contents": "Please login first.\n[Login](command:codingPlugin.login)",
-        "when": "!loggedIn"
+        "contents": "Please open a repo hosted by [coding.net](https://coding.net).\n [Open folder](command:vscode.openFolder)",
+        "when": "!hasTeam"
+      },
+      {
+        "view": "mrTreeView",
+        "contents": "Please login first.\n [Login](command:codingPlugin.login)",
+        "when": "!loggedIn && hasTeam"
       },
       {
         "view": "mrTreeView",

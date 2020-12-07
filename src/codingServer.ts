@@ -90,10 +90,7 @@ export class CodingServer {
   ): Promise<ISessionData> {
     try {
       const repoInfo = this._context.workspaceState.get(`repoInfo`) as IRepoInfo;
-      if (!repoInfo?.team) {
-        throw new Error(`team not exist`);
-      }
-
+      vscode.commands.executeCommand('setContext', 'hasTeam', !!repoInfo?.team);
       const result = await this.getUserInfo(repoInfo.team || ``, accessToken);
       const { data: userInfo } = result;
       const ret: ISessionData = {
@@ -212,7 +209,7 @@ export class CodingServer {
   public async getUserInfo(team: string, token: string = this._session?.accessToken || ``) {
     try {
       const result: CodingResponse = await got
-        .get(`https://codingcorp.coding.net/api/current_user`, {
+        .get(`https://${team || `codingcorp`}.coding.net/api/current_user`, {
           searchParams: {
             access_token: token,
           },
@@ -243,34 +240,28 @@ export class CodingServer {
   public getApiPrefix() {
     const repoInfo = this._context.workspaceState.get(`repoInfo`) as IRepoInfo;
     if (!repoInfo?.team) {
+      vscode.commands.executeCommand('setContext', 'hasTeam', false);
       throw new Error(`team not exist`);
     }
+
+    vscode.commands.executeCommand('setContext', 'hasTeam', true);
     return `https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.team}/project/${repoInfo.project}/depot/${repoInfo.repo}`;
   }
 
   public async getMRList(repo?: string, status?: string): Promise<CodingResponse> {
     try {
-      const repoInfo = this._context.workspaceState.get(`repoInfo`) as IRepoInfo;
-      if (!repoInfo?.team) {
-        throw new Error(`team not exist`);
-      }
-
+      const url = this.getApiPrefix();
       const result: CodingResponse = await got
-        .get(
-          `https://${repoInfo.team}.coding.net/api/user/${repoInfo.team}/project/${
-            repoInfo.project
-          }/depot/${repo || repoInfo.repo}/git/merges/query`,
-          {
-            searchParams: {
-              status,
-              sort: `action_at`,
-              page: 1,
-              PageSize: 9999,
-              sortDirection: `DESC`,
-              access_token: this._session?.accessToken,
-            },
+        .get(`${url}/git/merges/query`, {
+          searchParams: {
+            status,
+            sort: `action_at`,
+            page: 1,
+            PageSize: 9999,
+            sortDirection: `DESC`,
+            access_token: this._session?.accessToken,
           },
-        )
+        })
         .json();
       return result;
     } catch (err) {
@@ -567,22 +558,15 @@ export class CodingServer {
 
   public async createMR(data: ICreateMRBody) {
     try {
-      const repoInfo = this._context.workspaceState.get(`repoInfo`) as IRepoInfo;
-      if (!repoInfo?.team) {
-        throw new Error(`team not exist`);
-      }
-
-      const resp: ICreateMRResp = await got.post(
-        `https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.team}/project/${repoInfo.project}/depot/${repoInfo.repo}/git/merge`,
-        {
-          resolveBodyOnly: true,
-          responseType: `json`,
-          searchParams: {
-            access_token: this._session?.accessToken,
-          },
-          form: data,
+      const url = this.getApiPrefix();
+      const resp: ICreateMRResp = await got.post(`${url}/git/merge`, {
+        resolveBodyOnly: true,
+        responseType: `json`,
+        searchParams: {
+          access_token: this._session?.accessToken,
         },
-      );
+        form: data,
+      });
       if (resp.code) {
         return Promise.reject(resp);
       }
@@ -594,20 +578,13 @@ export class CodingServer {
 
   public async getBranchList() {
     try {
-      const repoInfo = this._context.workspaceState.get(`repoInfo`) as IRepoInfo;
-      if (!repoInfo?.team) {
-        throw new Error(`team not exist`);
-      }
-
+      const url = this.getApiPrefix();
       const resp: IBranchListResp = await got
-        .get(
-          `https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.team}/project/${repoInfo.project}/depot/${repoInfo.repo}/git/list_branches`,
-          {
-            searchParams: {
-              access_token: this._session?.accessToken,
-            },
+        .get(`${url}/git/list_branches`, {
+          searchParams: {
+            access_token: this._session?.accessToken,
           },
-        )
+        })
         .json();
       if (resp.code) {
         return Promise.reject(resp);

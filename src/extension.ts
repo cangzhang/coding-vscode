@@ -13,8 +13,10 @@ export async function activate(context: vscode.ExtensionContext) {
   const repoInfo = await CodingServer.getRepoParams();
 
   if (!repoInfo?.team) {
+    vscode.commands.executeCommand('setContext', 'hasTeam', false);
     vscode.window.showInformationMessage(`Please open a repo hosted by coding.net.`);
   } else {
+    vscode.commands.executeCommand('setContext', 'hasTeam', true);
     context.workspaceState.update(`repoInfo`, repoInfo);
   }
 
@@ -106,27 +108,40 @@ export async function activate(context: vscode.ExtensionContext) {
         return;
       }
 
-      const content = editor.document.getText();
+      let content = editor.document.getText().trimStart();
       if (!content) {
         return;
       }
+
+      const firstLineBreak = content.indexOf(`\n`);
+      const defaultTitle = content.slice(0, firstLineBreak).trim();
 
       const { data } = await codingSrv.getBranchList();
       const list = data.map((i) => ({
         label: i.name,
         description: ``,
       }));
+
       const src = await vscode.window.showQuickPick(list, {
         placeHolder: `Please choose source branch`,
       });
       if (!src) return;
+
       const des = await vscode.window.showQuickPick(list, {
         placeHolder: `Please choose target branch`,
       });
       if (!des) return;
-      const title = await vscode.window.showInputBox({ placeHolder: `Please input title` });
+
+      const title = await vscode.window.showInputBox({
+        placeHolder: `By default it's the first line of this document.`,
+        prompt: `Please input title for this merge request.`,
+        value: defaultTitle,
+      });
       if (!title) {
         return;
+      }
+      if (title === defaultTitle) {
+        content = content.slice(firstLineBreak + 1).trimStart() || ``;
       }
 
       try {
