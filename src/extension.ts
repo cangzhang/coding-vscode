@@ -6,13 +6,17 @@ import { Panel } from 'src/panel';
 import { IFileNode, MRTreeDataProvider } from 'src/tree/mrTree';
 import { ReleaseTreeDataProvider } from 'src/tree/releaseTree';
 import { IRepoInfo, IMRWebViewDetail, ISessionData } from 'src/typings/commonTypes';
+import { GitService } from 'src/common/gitService';
 
 export async function activate(context: vscode.ExtensionContext) {
+  await GitService.init();
   const repoInfo = await CodingServer.getRepoParams();
 
   if (!repoInfo?.team) {
+    vscode.commands.executeCommand('setContext', 'hasTeam', false);
     vscode.window.showInformationMessage(`Please open a repo hosted by coding.net.`);
   } else {
+    vscode.commands.executeCommand('setContext', 'hasTeam', true);
     context.workspaceState.update(`repoInfo`, repoInfo);
   }
 
@@ -32,7 +36,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const mrDataProvider = new MRTreeDataProvider(context, codingSrv);
   const releaseDataProvider = new ReleaseTreeDataProvider(context);
-  vscode.window.createTreeView(`mrTreeView`, {
+  const mrTree = vscode.window.createTreeView(`mrTreeView`, {
     treeDataProvider: mrDataProvider,
     showCollapseAll: true,
   });
@@ -87,6 +91,71 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('codingPlugin.refresh', () => {
       mrDataProvider.refresh();
+    }),
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand('codingPlugin.newMrDesc', async () => {
+      const doc = await vscode.workspace.openTextDocument({
+        language: `markdown`,
+      });
+      await vscode.window.showTextDocument(doc);
+    }),
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand('codingPlugin.createMr', async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        return;
+      }
+
+      let content = editor.document.getText().trimStart();
+      if (!content) {
+        return;
+      }
+
+      const firstLineBreak = content.indexOf(`\n`);
+      const defaultTitle = content.slice(0, firstLineBreak).trim();
+
+      const { data } = await codingSrv.getBranchList();
+      const list = data.map((i) => ({
+        label: i.name,
+        description: ``,
+      }));
+
+      const src = await vscode.window.showQuickPick(list, {
+        placeHolder: `Please choose source branch`,
+      });
+      if (!src) return;
+
+      const des = await vscode.window.showQuickPick(list, {
+        placeHolder: `Please choose target branch`,
+      });
+      if (!des) return;
+
+      const title = await vscode.window.showInputBox({
+        placeHolder: `By default it's the first line of this document.`,
+        prompt: `Please input title for this merge request.`,
+        value: defaultTitle,
+      });
+      if (!title) {
+        return;
+      }
+      if (title === defaultTitle) {
+        content = content.slice(firstLineBreak + 1).trimStart() || ``;
+      }
+
+      try {
+        const newMr = await codingSrv.createMR({
+          content,
+          title,
+          srcBranch: src.label,
+          desBranch: des.label,
+        });
+        vscode.window.showInformationMessage(
+          `Merge request ${newMr.data.merge_request.title} was created successfully.`,
+        );
+        mrDataProvider.refresh();
+      } catch (err) {}
     }),
   );
   context.subscriptions.push(

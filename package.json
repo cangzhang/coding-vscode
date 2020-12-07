@@ -38,6 +38,17 @@
         "category": "Coding plugin"
       },
       {
+        "command": "codingPlugin.newMrDesc",
+        "title": "New Merge Request",
+        "category": "Coding plugin",
+        "icon": "$(add)"
+      },
+      {
+        "command": "codingPlugin.createMr",
+        "title": "Create Merge Request from current document",
+        "category": "Coding plugin"
+      },
+      {
         "command": "codingPlugin.refresh",
         "title": "Refresh",
         "category": "Coding plugin",
@@ -52,6 +63,11 @@
     "menus": {
       "view/title": [
         {
+          "command": "codingPlugin.newMrDesc",
+          "when": "view == mrTreeView",
+          "group": "navigation"
+        },
+        {
           "command": "codingPlugin.refresh",
           "when": "view == mrTreeView",
           "group": "navigation"
@@ -61,8 +77,13 @@
     "viewsWelcome": [
       {
         "view": "mrTreeView",
-        "contents": "Please login first.\n[Login](command:codingPlugin.login)",
-        "when": "!loggedIn"
+        "contents": "Please open a repo hosted by [coding.net](https://coding.net).\n [Open folder](command:vscode.openFolder)",
+        "when": "!hasTeam"
+      },
+      {
+        "view": "mrTreeView",
+        "contents": "Please login first.\n [Login](command:codingPlugin.login)",
+        "when": "!loggedIn && hasTeam"
       },
       {
         "view": "mrTreeView",
