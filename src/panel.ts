@@ -197,7 +197,7 @@ export class Panel {
   }
 
   private _updateForCat(webview: vscode.Webview) {
-    this._panel.title = `Merge Request`;
+    this._panel.title = `Merge Request Overview`;
     this._panel.webview.html = this._getHtmlForWebview(webview);
   }
 
