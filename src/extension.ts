@@ -11,14 +11,9 @@ import { GitService } from 'src/common/gitService';
 export async function activate(context: vscode.ExtensionContext) {
   await GitService.init();
   const repoInfo = await CodingServer.getRepoParams();
-
-  if (!repoInfo?.team) {
-    vscode.commands.executeCommand('setContext', 'hasTeam', false);
-    vscode.window.showInformationMessage(`Please open a repo hosted by coding.net.`);
-  } else {
-    vscode.commands.executeCommand('setContext', 'hasTeam', true);
-    context.workspaceState.update(`repoInfo`, repoInfo);
-  }
+  const hasRepo = !!repoInfo?.repo;
+  await vscode.commands.executeCommand('setContext', 'hasRepo', hasRepo);
+  await context.workspaceState.update(`repoInfo`, repoInfo);
 
   const codingSrv = new CodingServer(context);
   await codingSrv.initialize();
@@ -28,10 +23,12 @@ export async function activate(context: vscode.ExtensionContext) {
   } else {
     await context.workspaceState.update(`session`, codingSrv.session);
     const rInfo = context.workspaceState.get(`repoInfo`, {});
-    await context.workspaceState.update(`repoInfo`, {
-      ...rInfo,
-      team: codingSrv.session.user.team,
-    });
+    if (repoInfo?.repo) {
+      await context.workspaceState.update(`repoInfo`, {
+        ...rInfo,
+        team: codingSrv.session.user.team,
+      });
+    }
   }
 
   const mrDataProvider = new MRTreeDataProvider(context, codingSrv);
@@ -170,7 +167,7 @@ export async function activate(context: vscode.ExtensionContext) {
         if (!selection) return;
 
         const r = context.workspaceState.get(`repoInfo`, {}) as IRepoInfo;
-        context.workspaceState.update(`repoInfo`, {
+        await context.workspaceState.update(`repoInfo`, {
           team: r?.team,
           project: selection?.description.replace(`/${selection?.label}`, ``),
           repo: selection?.label,
