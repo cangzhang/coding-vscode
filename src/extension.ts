@@ -46,10 +46,14 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('codingPlugin.showMROverview', async (mr: IMRWebViewDetail) => {
       Panel.createOrShow(context, codingSrv);
+      Panel.currentPanel?.broadcast(`mr.update.toggleLoading`, {});
       codingSrv.getMRDetail(mr.iid).then((detailResp) => {
         Panel.currentPanel?.broadcast(`mr.update`, {
           ...mr,
-          data: detailResp.data,
+          data: {
+            ...detailResp.data,
+            loading: false,
+          },
           user: context.workspaceState.get(`session`, {} as ISessionData)?.user,
         });
       });

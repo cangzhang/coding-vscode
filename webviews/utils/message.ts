@@ -10,7 +10,6 @@ export class MessageHandler {
     this._commandHandler = commandHandler;
     this.lastSentReq = 0;
     this.pendingReplies = Object.create(null);
-    window.addEventListener('message', this.handleMessage.bind(this));
   }
 
   public registerCommandHandler(commandHandler: (message: any) => void) {
@@ -34,7 +33,7 @@ export class MessageHandler {
     });
   }
 
-  private handleMessage(event: any) {
+  public handleMessage(event: any) {
     const message: IReplyMessage = event.data;
     if (message.seq) {
       const pendingReply = this.pendingReplies[message.seq];

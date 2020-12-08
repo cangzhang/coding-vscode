@@ -6,17 +6,20 @@ import appStore from 'webviews/store/appStore';
 import persistDataHook from 'webviews/hooks/persistDataHook';
 import Activities from 'webviews/components/Activities';
 import Reviewers from 'webviews/components/Reviewers';
+import messageTransferHook from 'webviews/hooks/messageTransferHook';
 
-const LoadingWrapper = styled.div`
+const EmptyWrapper = styled.div`
   font-size: 16px;
 `;
 const TitleWrapper = styled.div`
   display: flex;
   align-items: center;
   font-size: 20px;
+
   .edit {
     display: none;
   }
+
   &:hover .edit {
     display: block;
   }
@@ -57,15 +60,11 @@ function App() {
   const [isEditing, setEditing] = useState(false);
   const [title, setTitle] = useState(currentMR?.data?.merge_request?.title);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const { repoInfo, data } = currentMR;
+  const { merge_request: mergeRequest } = data || {};
 
   persistDataHook();
-
-  if (!currentMR.iid) {
-    return <LoadingWrapper>Please select an merge request first.</LoadingWrapper>;
-  }
-
-  const { repoInfo, data } = currentMR;
-  const { merge_request: mergeRequest } = data;
+  messageTransferHook();
 
   const handleKeyDown = async (event: any) => {
     if (event.key === 'Enter') {
@@ -87,6 +86,14 @@ function App() {
     setEditing(true);
     inputRef.current?.focus();
   };
+
+  if (!currentMR.iid) {
+    return <EmptyWrapper>Please select an merge request first.</EmptyWrapper>;
+  }
+
+  if (data.loading) {
+    return <EmptyWrapper>Loading...</EmptyWrapper>;
+  }
 
   return (
     <div>

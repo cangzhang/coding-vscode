@@ -34,6 +34,8 @@ export interface IMRWebViewDetail {
   iid: string;
   accessToken: string;
   repoInfo: IRepoInfo;
-  data: IMRDetail;
+  data: IMRDetail & {
+    loading: boolean;
+  };
   user: UserResponse;
 }
