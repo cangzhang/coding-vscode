@@ -246,14 +246,20 @@ export class CodingServer {
       throw new Error(`team not exist`);
     }
 
-    return `https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.team}/project/${repoInfo.project}/depot/${repoInfo.repo}`;
+    const projectApiPrefix = `https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.team}/project/${repoInfo.project}`;
+    return {
+      projectApiPrefix,
+      repoApiPrefix: `${projectApiPrefix}/depot/${repoInfo.repo}/git`,
+      userApiPrefix: `https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.global_key}`,
+      rawFilePrefix: `https://${repoInfo.team}.coding.net/p/${repoInfo.project}/d/${repoInfo.repo}/git/raw`,
+    };
   }
 
   public async getMRList(repo?: string, status?: string): Promise<CodingResponse> {
     try {
-      const url = await this.getApiPrefix();
+      const { repoApiPrefix } = await this.getApiPrefix();
       const result: CodingResponse = await got
-        .get(`${url}/git/merges/query`, {
+        .get(`${repoApiPrefix}/merges/query`, {
           searchParams: {
             status,
             sort: `action_at`,
@@ -272,20 +278,13 @@ export class CodingServer {
 
   public async getRepoList() {
     try {
-      const repoInfo = this._context.workspaceState.get(`repoInfo`) as IRepoInfo;
-      if (!repoInfo?.team) {
-        throw new Error(`team not exist`);
-      }
-
+      const { userApiPrefix } = await this.getApiPrefix();
       const { code, data, msg }: IRepoListResponse = await got
-        .get(
-          `https://${repoInfo.team}.coding.net/api/user/${this._session?.user?.global_key}/depots`,
-          {
-            searchParams: {
-              access_token: this._session?.accessToken,
-            },
+        .get(`${userApiPrefix}/depots`, {
+          searchParams: {
+            access_token: this._session?.accessToken,
           },
-        )
+        })
         .json();
       if (code) {
         return Promise.reject({ code, msg });
@@ -302,9 +301,9 @@ export class CodingServer {
 
   public async getMRDiff(iid: number) {
     try {
-      const url = await this.getApiPrefix();
+      const { repoApiPrefix } = await this.getApiPrefix();
       const diff: IMRDiffResponse = await got
-        .get(`${url}/git/merge/${iid}/diff`, {
+        .get(`${repoApiPrefix}/merge/${iid}/diff`, {
           searchParams: {
             access_token: this._session?.accessToken,
           },
@@ -321,9 +320,9 @@ export class CodingServer {
 
   public async getMRDetail(iid: string) {
     try {
-      const url = await this.getApiPrefix();
+      const { repoApiPrefix } = await this.getApiPrefix();
       const resp: IMRDetailResponse = await got
-        .get(`${url}/git/merge/${iid}/detail`, {
+        .get(`${repoApiPrefix}/merge/${iid}/detail`, {
           searchParams: {
             access_token: this._session?.accessToken,
           },
@@ -342,9 +341,9 @@ export class CodingServer {
 
   public async getMRActivities(iid: string) {
     try {
-      const url = await this.getApiPrefix();
+      const { repoApiPrefix } = await this.getApiPrefix();
       const result: IMRActivitiesResponse = await got
-        .get(`${url}/git/merge/${iid}/activities`, {
+        .get(`${repoApiPrefix}/merge/${iid}/activities`, {
           searchParams: {
             access_token: this._session?.accessToken,
           },
@@ -362,9 +361,9 @@ export class CodingServer {
 
   public async getMRReviewers(iid: string) {
     try {
-      const url = await this.getApiPrefix();
+      const { repoApiPrefix } = await this.getApiPrefix();
       const result: IMRReviewersResponse = await got
-        .get(`${url}/git/merge/${iid}/reviewers`, {
+        .get(`${repoApiPrefix}/merge/${iid}/reviewers`, {
           searchParams: {
             access_token: this._session?.accessToken,
           },
@@ -382,9 +381,9 @@ export class CodingServer {
 
   public async getMRComments(iid: string) {
     try {
-      const url = await this.getApiPrefix();
+      const { repoApiPrefix } = await this.getApiPrefix();
       const result: CodingResponse = await got
-        .get(`${url}/git/merge/${iid}/comments`, {
+        .get(`${repoApiPrefix}/merge/${iid}/comments`, {
           searchParams: {
             access_token: this._session?.accessToken,
           },
@@ -402,9 +401,9 @@ export class CodingServer {
 
   public async closeMR(iid: string) {
     try {
-      const url = await this.getApiPrefix();
+      const { repoApiPrefix } = await this.getApiPrefix();
       const result: CodingResponse = await got
-        .post(`${url}/git/merge/${iid}/refuse`, {
+        .post(`${repoApiPrefix}/merge/${iid}/refuse`, {
           searchParams: {
             access_token: this._session?.accessToken,
           },
@@ -422,9 +421,9 @@ export class CodingServer {
 
   public async approveMR(iid: string) {
     try {
-      const url = await this.getApiPrefix();
+      const { repoApiPrefix } = await this.getApiPrefix();
       const result: CodingResponse = await got
-        .post(`${url}/git/merge/${iid}/good`, {
+        .post(`${repoApiPrefix}/merge/${iid}/good`, {
           searchParams: {
             access_token: this._session?.accessToken,
           },
@@ -442,9 +441,9 @@ export class CodingServer {
 
   public async disapproveMR(iid: string) {
     try {
-      const url = await this.getApiPrefix();
+      const { repoApiPrefix } = await this.getApiPrefix();
       const result: CodingResponse = await got
-        .delete(`${url}/git/merge/${iid}/good`, {
+        .delete(`${repoApiPrefix}/merge/${iid}/good`, {
           searchParams: {
             access_token: this._session?.accessToken,
           },
@@ -462,9 +461,9 @@ export class CodingServer {
 
   public async mergeMR(iid: string) {
     try {
-      const url = await this.getApiPrefix();
+      const { repoApiPrefix } = await this.getApiPrefix();
       const result: CodingResponse = await got
-        .post(`${url}/git/merge/${iid}/merge`, {
+        .post(`${repoApiPrefix}/merge/${iid}/merge`, {
           searchParams: {
             access_token: this._session?.accessToken,
           },
@@ -485,9 +484,9 @@ export class CodingServer {
 
   public async updateMRTitle(iid: string, title: string) {
     try {
-      const url = await this.getApiPrefix();
+      const { repoApiPrefix } = await this.getApiPrefix();
       const result: CodingResponse = await got
-        .put(`${url}/git/merge/${iid}/update-title`, {
+        .put(`${repoApiPrefix}/merge/${iid}/update-title`, {
           searchParams: {
             access_token: this._session?.accessToken,
             title,
@@ -509,9 +508,9 @@ export class CodingServer {
 
   public async commentMR(mrId: number, comment: string) {
     try {
-      const url = await this.getApiPrefix();
+      const { repoApiPrefix } = await this.getApiPrefix();
       const result: CodingResponse = await got
-        .post(`${url}/git/line_notes`, {
+        .post(`${repoApiPrefix}/line_notes`, {
           searchParams: {
             access_token: this._session?.accessToken,
             line: 0,
@@ -539,12 +538,8 @@ export class CodingServer {
 
   public async getRemoteFileContent(path: string) {
     try {
-      const repoInfo = this._context.workspaceState.get(`repoInfo`) as IRepoInfo;
-      if (!repoInfo?.team) {
-        throw new Error(`team not exist`);
-      }
-
-      const url = `https://${repoInfo.team}.coding.net/p/${repoInfo.project}/d/${repoInfo.repo}/git/raw/${path}`;
+      const { rawFilePrefix } = await this.getApiPrefix();
+      const url = `${rawFilePrefix}/${path}`;
       const { body } = await got.get(url, {
         searchParams: {
           access_token: this._session?.accessToken,
@@ -559,8 +554,8 @@ export class CodingServer {
 
   public async createMR(data: ICreateMRBody) {
     try {
-      const url = await this.getApiPrefix();
-      const resp: ICreateMRResp = await got.post(`${url}/git/merge`, {
+      const { repoApiPrefix } = await this.getApiPrefix();
+      const resp: ICreateMRResp = await got.post(`${repoApiPrefix}/merge`, {
         resolveBodyOnly: true,
         responseType: `json`,
         searchParams: {
@@ -579,9 +574,9 @@ export class CodingServer {
 
   public async getBranchList() {
     try {
-      const url = await this.getApiPrefix();
+      const { repoApiPrefix } = await this.getApiPrefix();
       const resp: IBranchListResp = await got
-        .get(`${url}/git/list_branches`, {
+        .get(`${repoApiPrefix}/list_branches`, {
           searchParams: {
             access_token: this._session?.accessToken,
           },

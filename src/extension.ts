@@ -200,6 +200,9 @@ export async function activate(context: vscode.ExtensionContext) {
       );
     }),
   );
+  context.subscriptions.push(
+    vscode.commands.registerCommand(`codingPlugin.mr.addReviewer`, async (file: IFileNode) => {}),
+  );
 
   if (vscode.window.registerWebviewPanelSerializer) {
     // Make sure we register a serializer in activation event

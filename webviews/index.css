@@ -37,7 +37,7 @@ textarea:focus {
   outline: 1px solid var(--vscode-focusBorder);
 }
 
-button {
+button.colored {
   background-color: var(--vscode-button-background);
   color: var(--vscode-button-foreground);
   border-radius: 0px;
@@ -52,16 +52,16 @@ button {
   opacity: 0.9;
 }
 
-button:hover {
+button.colored:hover {
   opacity: 1;
 }
 
-button.secondary {
+button.colored.secondary {
   background-color: var(--vscode-button-secondaryBackground);
   color: var(--vscode-button-secondaryForeground);
 }
 
-button:disabled {
+button.colored:disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }

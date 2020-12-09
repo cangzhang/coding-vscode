@@ -1,8 +1,12 @@
 import React from 'react';
 import styled from 'styled-components';
 import { view } from '@risingstack/react-easy-state';
+
 import appStore from 'webviews/store/appStore';
 import { Avatar, AuthorLink } from 'webviews/components/User';
+import { ReactComponent as PlusIcon } from 'webviews/assets/plus.svg';
+import { ReactComponent as CheckIcon } from 'webviews/assets/check.svg';
+import { ReactComponent as DeleteIcon } from 'webviews/assets/delete.svg';
 
 const Title = styled.div`
   margin-top: 15px;
@@ -16,15 +20,41 @@ const FlexCenter = styled.div`
 const Item = styled(FlexCenter)`
   padding: 5px 0;
   justify-content: space-between;
+
+  :hover {
+    cursor: pointer;
+  }
+
   a:first-child {
     margin-right: 5px;
   }
 `;
-const Icon = styled.div`
-  width: 16px;
-  height: 16px;
-  position: relative;
-  top: 4px;
+const IconButton = styled.button`
+  border: unset;
+  background: unset;
+  width: 20px;
+  height: 20px;
+  margin-left: 1ex;
+  padding: 2px 0;
+  vertical-align: middle;
+
+  :hover {
+    cursor: pointer;
+  }
+
+  :focus {
+    outline: 1px solid var(--vscode-focusBorder);
+    outline-offset: 2px;
+  }
+
+  svg path {
+    fill: var(--vscode-foreground);
+  }
+`;
+const Check = styled(CheckIcon)`
+  svg path {
+    fill: var(--vscode-button-background);
+  }
 `;
 
 function Reviewers() {
@@ -34,19 +64,23 @@ function Reviewers() {
 
   return (
     <div>
-      <Title>Reviewers</Title>
+      <Title>
+        Reviewers
+        <IconButton>
+          <PlusIcon />
+        </IconButton>
+      </Title>
       {allReviewers.map((r) => {
         return (
-          <Item>
+          <Item key={r.reviewer.global_key}>
             <FlexCenter>
               <Avatar for={r.reviewer} />
               <AuthorLink for={r.reviewer} />
             </FlexCenter>
-            {r.value === 100 && (
-              <Icon>
-                <span dangerouslySetInnerHTML={{ __html: require('../assets/check.svg') }} />
-              </Icon>
-            )}
+            {r.value === 100 && <Check />}
+            <IconButton>
+              <DeleteIcon />
+            </IconButton>
           </Item>
         );
       })}
