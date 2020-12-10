@@ -122,6 +122,26 @@ export class Panel {
               const getActivitiesRes = await this._codingSrv.getMRActivities(args);
               this.replyMessage(message, getActivitiesRes.data);
               break;
+            case 'mr.update.addReviewer': {
+              try {
+                const {
+                  data: { list: memberList },
+                } = await codingSrv.getProjectMembers();
+                const list = memberList.map((i) => ({
+                  label: i.user.name,
+                  description: i.user.global_key,
+                }));
+                const selection = await vscode.window.showQuickPick(list, {
+                  canPickMany: true,
+                });
+                if (!selection) {
+                  return;
+                }
+              } catch (err) {}
+              break;
+            }
+            default:
+              break;
           }
         } catch (err) {
           this.throwError(message, err.msg);

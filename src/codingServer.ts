@@ -14,6 +14,7 @@ import {
   ICreateMRBody,
   ICreateMRResp,
   IBranchListResp,
+  IMemberListResp,
 } from 'src/typings/respResult';
 import { PromiseAdapter, promiseFromEvent, parseQuery, parseCloneUrl } from 'src/common/utils';
 import { GitService } from 'src/common/gitService';
@@ -25,7 +26,7 @@ const AUTH_SERVER = `https://x5p7m.csb.app`;
 const ClientId = `ff768664c96d04235b1cc4af1e3b37a8`;
 const ClientSecret = `d29ebb32cab8b5f0a643b5da7dcad8d1469312c7`;
 
-export const ScopeList = [`user`, `user:email`, `project`, `project:depot`];
+export const ScopeList = [`user`, `user:email`, `project`, `project:depot`, `project:members`];
 const SCOPES = ScopeList.join(`,`);
 const NETWORK_ERROR = 'network error';
 
@@ -585,6 +586,28 @@ export class CodingServer {
       if (resp.code) {
         return Promise.reject(resp);
       }
+      return resp;
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  public async getProjectMembers() {
+    try {
+      const { projectApiPrefix } = await this.getApiPrefix();
+      const resp: IMemberListResp = await got
+        .get(`${projectApiPrefix}/members`, {
+          searchParams: {
+            pageSize: 9999,
+            access_token: this._session?.accessToken,
+          },
+        })
+        .json();
+
+      if (resp.code) {
+        return Promise.reject(resp);
+      }
+
       return resp;
     } catch (err) {
       return Promise.reject(err);

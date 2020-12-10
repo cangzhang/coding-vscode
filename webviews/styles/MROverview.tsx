@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 
-import { ReactComponent as EditIcon } from 'webviews/assets/edit.svg';
+import EditIcon from 'webviews/assets/edit.svg';
 
 export const EmptyWrapper = styled.div`
   font-size: 16px;

@@ -15,7 +15,7 @@ export interface AuthFailResult {
   };
 }
 
-export interface UserResponse {
+export interface IUserItem {
   id: number;
   avatar: string;
   global_key: string;
@@ -30,8 +30,8 @@ export interface IMRData {
   title: string;
   merge_status: string;
   path: string;
-  author: UserResponse;
-  action_author: UserResponse;
+  author: IUserItem;
+  action_author: IUserItem;
   created_at: number;
   updated_at: number;
 }
@@ -40,6 +40,16 @@ export interface CodingResponse {
   code: number;
   data?: any;
   msg?: string;
+}
+
+export interface IListResponse<T> extends CodingResponse {
+  data: {
+    list: T[];
+    page: number;
+    pageSize: number;
+    totalPage: number;
+    totalRow: number;
+  };
 }
 
 export interface IRepoItem {
@@ -139,7 +149,7 @@ export interface IActivity {
   action: string;
   created_at: number;
   id: number;
-  author: UserResponse;
+  author: IUserItem;
   comment?: {
     commits: any[];
   };
@@ -150,7 +160,7 @@ export interface IMRActivitiesResponse extends CodingResponse {
 }
 
 export interface IReviewer {
-  reviewer: UserResponse;
+  reviewer: IUserItem;
   value: number;
   volunteer: string;
 }
@@ -163,7 +173,7 @@ export interface IMRReviewersResponse extends CodingResponse {
 }
 
 export interface IComment {
-  author: UserResponse;
+  author: IUserItem;
   childComments?: IComment[];
   content: string;
   created_at: number;
@@ -205,3 +215,17 @@ export interface IBranchItem {
 export interface IBranchListResp extends CodingResponse {
   data: IBranchItem[];
 }
+
+export interface IMemberItem {
+  id: number;
+  project_id: number;
+  user_id: number;
+  type: number;
+  alias: string;
+  team_alias: string;
+  created_at: number;
+  last_visit_at: number;
+  user: IUserItem;
+}
+
+export interface IMemberListResp extends IListResponse<IMemberItem> {}

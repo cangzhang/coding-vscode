@@ -113,6 +113,13 @@ const appStore = store({
     appStore.comments.push([result] as any);
     return result;
   },
+  async addReviewers() {
+    const result = await vscode.postMessage({
+      command: actions.MR_ADD_REVIEWER,
+      args: {},
+    });
+    return result;
+  },
 });
 
 export const persistData = () =>

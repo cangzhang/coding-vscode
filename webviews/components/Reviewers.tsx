@@ -4,9 +4,9 @@ import { view } from '@risingstack/react-easy-state';
 
 import appStore from 'webviews/store/appStore';
 import { Avatar, AuthorLink } from 'webviews/components/User';
-import { ReactComponent as PlusIcon } from 'webviews/assets/plus.svg';
-import { ReactComponent as CheckIcon } from 'webviews/assets/check.svg';
-import { ReactComponent as DeleteIcon } from 'webviews/assets/delete.svg';
+import PlusIcon from 'webviews/assets/plus.svg';
+import CheckIcon from 'webviews/assets/check.svg';
+import DeleteIcon from 'webviews/assets/delete.svg';
 
 const Title = styled.div`
   margin-top: 15px;
@@ -61,12 +61,13 @@ function Reviewers() {
   const { reviewers } = appStore;
   const { reviewers: rReviewers = [], volunteer_reviewers: volunteerReviewers = [] } = reviewers;
   const allReviewers = [...rReviewers, ...volunteerReviewers];
+  const { addReviewers } = appStore;
 
   return (
     <div>
       <Title>
         Reviewers
-        <IconButton>
+        <IconButton onClick={addReviewers}>
           <PlusIcon />
         </IconButton>
       </Title>

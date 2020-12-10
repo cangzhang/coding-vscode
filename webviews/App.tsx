@@ -55,7 +55,7 @@ function App() {
     return <EmptyWrapper>Please select an merge request first.</EmptyWrapper>;
   }
 
-  if (data.loading) {
+  if (data?.loading) {
     return <EmptyWrapper>Loading...</EmptyWrapper>;
   }
 

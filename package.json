@@ -2,7 +2,7 @@
   "name": "coding-plugin",
   "description": "Coding plugin for VS Code.",
   "version": "1.0.0",
-  "publisher": "alcheung",
+  "publisher": "coding",
   "license": "MIT",
   "engines": {
     "vscode": "^1.47.0"
