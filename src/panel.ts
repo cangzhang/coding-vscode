@@ -122,21 +122,43 @@ export class Panel {
               const getActivitiesRes = await this._codingSrv.getMRActivities(args);
               this.replyMessage(message, getActivitiesRes.data);
               break;
-            case 'mr.update.addReviewer': {
+            case 'mr.update.reviewers': {
               try {
+                const [iid, selected]: [string, number[]] = args;
                 const {
                   data: { list: memberList },
                 } = await codingSrv.getProjectMembers();
-                const list = memberList.map((i) => ({
-                  label: i.user.name,
-                  description: i.user.global_key,
-                }));
+                const list = memberList
+                  .filter((i) => i.user.global_key !== codingSrv.session?.user?.global_key)
+                  .map((i) => ({
+                    label: i.user.name,
+                    description: i.user.global_key,
+                    picked: selected.includes(i.user.id),
+                    userId: i.user.id,
+                  }));
                 const selection = await vscode.window.showQuickPick(list, {
                   canPickMany: true,
+                  ignoreFocusOut: true,
                 });
+
                 if (!selection) {
                   return;
                 }
+
+                const s = selection.map((i) => i.userId);
+                const added = s.filter((i) => !selected.includes(i));
+                const removed = selected.filter((i) => !s.includes(i));
+                const tasks = [];
+                if (added.length) {
+                  tasks.push(codingSrv.addMRReviewers(iid, added));
+                }
+                if (removed.length) {
+                  tasks.push(codingSrv.removeMRReviewers(iid, removed));
+                }
+
+                await Promise.all(tasks);
+                const resp = await codingSrv.getMRReviewers(iid);
+                this.broadcast(command, resp.data);
               } catch (err) {}
               break;
             }

@@ -614,6 +614,52 @@ export class CodingServer {
     }
   }
 
+  public async addMRReviewers(iid: string, ids: number[]): Promise<number[]> {
+    const { repoApiPrefix } = await this.getApiPrefix();
+    const tasks: Promise<CodingResponse>[] = ids.map((id) => {
+      return got
+        .post(`${repoApiPrefix}/merge/${iid}/reviewers`, {
+          searchParams: {
+            user_id: id,
+            access_token: this._session?.accessToken,
+          },
+        })
+        .json();
+    });
+    const result: PromiseSettledResult<CodingResponse>[] = await Promise.allSettled(tasks);
+    const fulfilled = ids.reduce((res, cur, idx) => {
+      if (result[idx].status === `fulfilled`) {
+        res = res.concat(cur);
+      }
+
+      return res;
+    }, [] as number[]);
+    return fulfilled;
+  }
+
+  public async removeMRReviewers(iid: string, ids: number[]): Promise<number[]> {
+    const { repoApiPrefix } = await this.getApiPrefix();
+    const tasks: Promise<CodingResponse>[] = ids.map((id) => {
+      return got
+        .delete(`${repoApiPrefix}/merge/${iid}/reviewers`, {
+          searchParams: {
+            user_id: id,
+            access_token: this._session?.accessToken,
+          },
+        })
+        .json();
+    });
+    const result: PromiseSettledResult<CodingResponse>[] = await Promise.allSettled(tasks);
+    const fulfilled = ids.reduce((res, cur, idx) => {
+      if (result[idx].status === `fulfilled`) {
+        res = res.concat(cur);
+      }
+
+      return res;
+    }, [] as number[]);
+    return fulfilled;
+  }
+
   get loggedIn() {
     return this._loggedIn;
   }

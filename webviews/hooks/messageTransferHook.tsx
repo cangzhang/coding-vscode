@@ -27,12 +27,12 @@ export default function messageTransferHook() {
           updateMRActivities(res);
           break;
         }
-        case actions.UPDATE_MR_REVIEWERS: {
-          updateMRReviewers(res);
-          break;
-        }
         case actions.MR_UPDATE_COMMENTS: {
           updateMRComments(res);
+          break;
+        }
+        case actions.MR_UPDATE_REVIEWERS: {
+          res && updateMRReviewers(res);
           break;
         }
         default:

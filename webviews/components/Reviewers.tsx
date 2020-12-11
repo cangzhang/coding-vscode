@@ -1,12 +1,10 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import styled from 'styled-components';
 import { view } from '@risingstack/react-easy-state';
 
 import appStore from 'webviews/store/appStore';
 import { Avatar, AuthorLink } from 'webviews/components/User';
-import PlusIcon from 'webviews/assets/plus.svg';
-import CheckIcon from 'webviews/assets/check.svg';
-import DeleteIcon from 'webviews/assets/delete.svg';
+import EditIcon from 'webviews/assets/edit.svg';
 
 const Title = styled.div`
   margin-top: 15px;
@@ -20,10 +18,6 @@ const FlexCenter = styled.div`
 const Item = styled(FlexCenter)`
   padding: 5px 0;
   justify-content: space-between;
-
-  :hover {
-    cursor: pointer;
-  }
 
   a:first-child {
     margin-right: 5px;
@@ -51,24 +45,24 @@ const IconButton = styled.button`
     fill: var(--vscode-foreground);
   }
 `;
-const Check = styled(CheckIcon)`
-  svg path {
-    fill: var(--vscode-button-background);
-  }
-`;
 
 function Reviewers() {
-  const { reviewers } = appStore;
+  const { reviewers, currentMR } = appStore;
   const { reviewers: rReviewers = [], volunteer_reviewers: volunteerReviewers = [] } = reviewers;
   const allReviewers = [...rReviewers, ...volunteerReviewers];
-  const { addReviewers } = appStore;
+  const { updateReviewers } = appStore;
+
+  const onUpdateReviewer = useCallback(() => {
+    const list = allReviewers.map((i) => i.reviewer.id);
+    updateReviewers(currentMR.iid, list);
+  }, [allReviewers]);
 
   return (
     <div>
       <Title>
         Reviewers
-        <IconButton onClick={addReviewers}>
-          <PlusIcon />
+        <IconButton onClick={onUpdateReviewer}>
+          <EditIcon />
         </IconButton>
       </Title>
       {allReviewers.map((r) => {
@@ -78,10 +72,7 @@ function Reviewers() {
               <Avatar for={r.reviewer} />
               <AuthorLink for={r.reviewer} />
             </FlexCenter>
-            {r.value === 100 && <Check />}
-            <IconButton>
-              <DeleteIcon />
-            </IconButton>
+            {r.value === 100 && `👍`}
           </Item>
         );
       })}

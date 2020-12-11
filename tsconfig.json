@@ -5,7 +5,7 @@
     "outDir": "out/webviews",
     "module": "esnext",
     "target": "es5",
-    "lib": ["es6", "dom", "esnext.asynciterable"],
+    "lib": ["es2020", "es6", "dom", "esnext.asynciterable"],
     "sourceMap": true,
     "allowJs": true,
     "jsx": "react",
@@ -21,7 +21,7 @@
     "allowSyntheticDefaultImports": true,
     "paths": {
       "webviews/*": ["webviews/*"],
-      "src/*": ["src/*"],
+      "src/*": ["src/*"]
     }
   },
   "include": ["webviews", "types"]
