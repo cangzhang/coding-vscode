@@ -1,11 +1,14 @@
-import React, { useRef, useState } from 'react';
-
+import React, { FormEvent, useRef, useState } from 'react';
 import { view } from '@risingstack/react-easy-state';
+
 import appStore from 'webviews/store/appStore';
 import persistDataHook from 'webviews/hooks/persistDataHook';
 import Activities from 'webviews/components/Activities';
 import Reviewers from 'webviews/components/Reviewers';
 import messageTransferHook from 'webviews/hooks/messageTransferHook';
+import EditButton from 'webviews/components/EditButton';
+import { requestUpdateMRContent } from 'webviews/service/mrService';
+
 import {
   EmptyWrapper,
   TitleWrapper,
@@ -17,13 +20,17 @@ import {
   Empty,
   BranchName,
   EditBtn,
-} from 'webviews/styles/MROverview';
+  OperationBtn,
+  SectionTitle,
+} from 'webviews/app.styles';
 
 function App() {
-  const { currentMR, updateMRTitle } = appStore;
-  const [isEditing, setEditing] = useState(false);
+  const { currentMR, updateMRTitle, toggleUpdatingDesc } = appStore;
+  const [isEditingTitle, setEditingTitle] = useState(false);
   const [title, setTitle] = useState(currentMR?.data?.merge_request?.title);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const [desc, setDesc] = useState(``);
+
   const { repoInfo, data } = currentMR;
   const { merge_request: mergeRequest } = data || {};
 
@@ -33,7 +40,7 @@ function App() {
   const handleKeyDown = async (event: any) => {
     if (event.key === 'Enter') {
       await updateMRTitle(title);
-      setEditing(false);
+      setEditingTitle(false);
     }
   };
 
@@ -47,8 +54,21 @@ function App() {
   };
 
   const handleEdit = () => {
-    setEditing(true);
+    setEditingTitle(true);
     inputRef.current?.focus();
+  };
+
+  const onEditDesc = () => {
+    toggleUpdatingDesc();
+    setDesc(currentMR.data.merge_request.body_plan);
+  };
+
+  const onChangeDesc = (ev: FormEvent<HTMLTextAreaElement>) => {
+    setDesc(ev.currentTarget.value);
+  };
+
+  const onSaveDesc = async () => {
+    await requestUpdateMRContent(currentMR.iid, desc);
   };
 
   if (!currentMR.iid) {
@@ -62,13 +82,13 @@ function App() {
   return (
     <div>
       <TitleWrapper>
-        {isEditing ? (
+        {isEditingTitle ? (
           <input
             type='text'
             value={title}
             ref={(ref) => (inputRef.current = ref)}
-            onBlur={() => setEditing(false)}
-            onFocus={() => setEditing(true)}
+            onBlur={() => setEditingTitle(false)}
+            onFocus={() => setEditingTitle(true)}
             onKeyDown={handleKeyDown}
             onChange={handleTitleChange}
           />
@@ -91,14 +111,39 @@ function App() {
       </Row>
       <BodyWrap>
         <Body>
-          <h3>Description</h3>
-          <Desc>
-            {mergeRequest?.body ? (
-              <div dangerouslySetInnerHTML={{ __html: mergeRequest?.body }} />
-            ) : (
-              <Empty>Empty</Empty>
+          <SectionTitle>
+            Description
+            {!currentMR.data.editingDesc && <EditButton onClick={onEditDesc} />}
+            {currentMR.data.editingDesc && (
+              <>
+                <OperationBtn className={`colored`} onClick={onSaveDesc}>
+                  Save
+                </OperationBtn>
+                <OperationBtn className={`colored secondary`} onClick={() => toggleUpdatingDesc()}>
+                  Cancel
+                </OperationBtn>
+              </>
             )}
-          </Desc>
+          </SectionTitle>
+          {!currentMR.data.editingDesc && (
+            <Desc>
+              {mergeRequest?.body ? (
+                <div dangerouslySetInnerHTML={{ __html: mergeRequest?.body }} />
+              ) : (
+                <Empty>This MR has no description.</Empty>
+              )}
+            </Desc>
+          )}
+          {currentMR.data.editingDesc && (
+            <textarea
+              name='desc'
+              id='mr-desc'
+              cols={30}
+              rows={20}
+              value={desc}
+              onChange={onChangeDesc}
+            />
+          )}
           <h3>Activities</h3>
           <Activities />
         </Body>

@@ -53,3 +53,11 @@ export const Empty = styled.div`
 export const BranchName = styled.code`
   margin: 0 1ex;
 `;
+
+export const OperationBtn = styled.button`
+  margin-left: 1em;
+`;
+
+export const SectionTitle = styled.h3`
+  line-height: 28px;
+`;

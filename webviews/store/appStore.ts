@@ -1,6 +1,6 @@
 import { autoEffect, clearEffect, store } from '@risingstack/react-easy-state';
 import { IMRWebViewDetail } from 'src/typings/commonTypes';
-import { IActivity, IReviewer, IComment } from 'src/typings/respResult';
+import { IActivity, IReviewer, IComment, IMRContent } from 'src/typings/respResult';
 import { vscode } from 'webviews/constants/vscode';
 import { actions } from 'webviews/store/constants';
 import { MERGE_STATUS } from 'webviews/constants/mergeRequest';
@@ -119,6 +119,17 @@ const appStore = store({
       args: [iid, list],
     });
     return result;
+  },
+  toggleUpdatingDesc() {
+    appStore.currentMR.data.editingDesc = !appStore.currentMR.data.editingDesc;
+  },
+  updateMRDesc(iid: string, resp: IMRContent) {
+    if (iid !== appStore.currentMR.iid) {
+      return;
+    }
+
+    appStore.currentMR.data.merge_request.body = resp.body;
+    appStore.currentMR.data.merge_request.body_plan = resp.body_plan;
   },
 });
 

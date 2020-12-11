@@ -229,3 +229,12 @@ export interface IMemberItem {
 }
 
 export interface IMemberListResp extends IListResponse<IMemberItem> {}
+
+export interface IMRContent {
+  body: string;
+  body_plan: string;
+}
+
+export interface IMRContentResp extends CodingResponse {
+  data: IMRContent;
+}

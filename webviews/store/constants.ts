@@ -11,4 +11,5 @@ export enum actions {
   MR_GET_ACTIVITIES = `mr.get.activities`,
   MR_TOGGLE_LOADING = `mr.update.toggleLoading`,
   MR_UPDATE_REVIEWERS = `mr.update.reviewers`,
+  MR_UPDATE_DESC = `mr.update.desc`,
 }

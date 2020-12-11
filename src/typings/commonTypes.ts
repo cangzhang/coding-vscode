@@ -36,6 +36,7 @@ export interface IMRWebViewDetail {
   repoInfo: IRepoInfo;
   data: IMRDetail & {
     loading: boolean;
+    editingDesc: boolean;
   };
   user: IUserItem;
 }

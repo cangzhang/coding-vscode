@@ -162,6 +162,14 @@ export class Panel {
               } catch (err) {}
               break;
             }
+            case `mr.update.desc`: {
+              try {
+                const [iid, content] = args;
+                const resp = await codingSrv.updateMRDesc(iid, content);
+                this.broadcast(command, [iid, resp.data]);
+              } catch (e) {}
+              break;
+            }
             default:
               break;
           }

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import appStore from 'webviews/store/appStore';
 import { actions } from 'webviews/store/constants';
+import { IMRContent } from 'src/typings/respResult';
 
 export default function messageTransferHook() {
   useEffect(() => {
@@ -11,6 +12,8 @@ export default function messageTransferHook() {
         updateMRReviewers,
         updateMRComments,
         toggleMRLoading,
+        updateMRDesc,
+        toggleUpdatingDesc,
       } = appStore;
       const { command, res } = ev?.data;
 
@@ -33,6 +36,12 @@ export default function messageTransferHook() {
         }
         case actions.MR_UPDATE_REVIEWERS: {
           res && updateMRReviewers(res);
+          break;
+        }
+        case actions.MR_UPDATE_DESC: {
+          const [iid, resp] = res as [string, IMRContent];
+          updateMRDesc(iid, resp);
+          toggleUpdatingDesc();
           break;
         }
         default:

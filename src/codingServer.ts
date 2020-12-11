@@ -15,6 +15,7 @@ import {
   ICreateMRResp,
   IBranchListResp,
   IMemberListResp,
+  IMRContentResp,
 } from 'src/typings/respResult';
 import { PromiseAdapter, promiseFromEvent, parseQuery, parseCloneUrl } from 'src/common/utils';
 import { GitService } from 'src/common/gitService';
@@ -658,6 +659,30 @@ export class CodingServer {
       return res;
     }, [] as number[]);
     return fulfilled;
+  }
+
+  public async updateMRDesc(iid: string, content: string) {
+    try {
+      const { repoApiPrefix } = await this.getApiPrefix();
+      const resp: IMRContentResp = await got
+        .put(`${repoApiPrefix}/merge/${iid}/update-content`, {
+          form: {
+            content,
+          },
+          searchParams: {
+            access_token: this._session?.accessToken,
+          },
+        })
+        .json();
+
+      if (resp.code) {
+        return Promise.reject(resp);
+      }
+
+      return resp;
+    } catch (e) {
+      return Promise.reject(e);
+    }
   }
 
   get loggedIn() {
