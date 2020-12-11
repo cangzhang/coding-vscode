@@ -44,6 +44,8 @@ export default function messageTransferHook() {
           toggleUpdatingDesc();
           break;
         }
+        case actions.MR_ADD_COMMENT: {
+        }
         default:
           break;
       }

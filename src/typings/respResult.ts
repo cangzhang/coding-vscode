@@ -238,3 +238,7 @@ export interface IMRContent {
 export interface IMRContentResp extends CodingResponse {
   data: IMRContent;
 }
+
+export interface ICreateCommentResp extends CodingResponse {
+  data: IComment;
+}

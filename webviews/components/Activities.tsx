@@ -12,7 +12,7 @@ function Activities() {
 
   const renderActivity = (activity: [IActivity]) => {
     return (
-      <div key={activity[0].id}>
+      <div key={activity[0]?.id}>
         <Activity
           activity={activity[0]}
           srcBranch={currentMR.data.merge_request.srcBranch}
@@ -31,16 +31,16 @@ function Activities() {
   };
 
   const allActivities = [...activities.map((i) => [i]), ...comments].sort(
-    (a, b) => a[0].created_at - b[0].created_at,
+    (a, b) => a[0]?.created_at - b[0]?.created_at,
   );
 
   return (
     <div>
       <div>
         {allActivities.map((activity: any) => {
-          if (activity[0].action) {
+          if (activity[0]?.action) {
             return renderActivity(activity as [IActivity]);
-          } else if (!activity[0].action) {
+          } else if (!activity[0]?.action) {
             return renderComment(activity as [IComment]);
           }
           return null;

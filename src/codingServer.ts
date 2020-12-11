@@ -16,6 +16,7 @@ import {
   IBranchListResp,
   IMemberListResp,
   IMRContentResp,
+  ICreateCommentResp,
 } from 'src/typings/respResult';
 import { PromiseAdapter, promiseFromEvent, parseQuery, parseCloneUrl } from 'src/common/utils';
 import { GitService } from 'src/common/gitService';
@@ -511,7 +512,7 @@ export class CodingServer {
   public async commentMR(mrId: number, comment: string) {
     try {
       const { repoApiPrefix } = await this.getApiPrefix();
-      const result: CodingResponse = await got
+      const result: ICreateCommentResp = await got
         .post(`${repoApiPrefix}/line_notes`, {
           searchParams: {
             access_token: this._session?.accessToken,

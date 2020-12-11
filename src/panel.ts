@@ -116,7 +116,7 @@ export class Panel {
               break;
             case 'mr.add.comment':
               const commentRes = await this._codingSrv.commentMR(args.id, args.comment);
-              this.replyMessage(message, commentRes.data);
+              this.broadcast(command, commentRes.data);
               break;
             case 'mr.get.activities':
               const getActivitiesRes = await this._codingSrv.getMRActivities(args);

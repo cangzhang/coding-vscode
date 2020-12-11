@@ -131,6 +131,9 @@ const appStore = store({
     appStore.currentMR.data.merge_request.body = resp.body;
     appStore.currentMR.data.merge_request.body_plan = resp.body_plan;
   },
+  addComment(comment: IComment) {
+    appStore.comments.push(comment);
+  },
 });
 
 export const persistData = () =>
