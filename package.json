@@ -1,7 +1,7 @@
 {
   "name": "coding-plugin",
   "description": "Coding plugin for VS Code.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "coding-net",
   "license": "MIT",
   "engines": {
@@ -15,6 +15,7 @@
     "onCommand:codingPlugin.login",
     "onView:mrTreeView"
   ],
+  "icon": "src/assets/coding.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/cangzhang/coding-vscode.git"
@@ -124,7 +125,9 @@
     "watch": "npm-run-all -p watch:*",
     "watch:extension": "tsc -watch -p ./src",
     "watch:webviews": "webpack --watch --mode development",
-    "lint": "eslint . --ext .ts,.tsx"
+    "lint": "eslint . --ext .ts,.tsx",
+    "package": "npx vsce package",
+    "publish": "npx vsce publish"
   },
   "babel": {
     "plugins": [
