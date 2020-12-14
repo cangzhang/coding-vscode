@@ -127,7 +127,7 @@
     "watch:webviews": "webpack --watch --mode development",
     "lint": "eslint . --ext .ts,.tsx",
     "package": "npx vsce package",
-    "publish": "npx vsce publish"
+    "release": "npx vsce publish"
   },
   "babel": {
     "plugins": [
