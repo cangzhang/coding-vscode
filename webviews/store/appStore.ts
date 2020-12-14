@@ -20,9 +20,6 @@ const appStore = store({
   updateMRActivities(data: IActivity[]) {
     appStore.activities = data;
   },
-  updateMRReviewers(data: IMRReviewers) {
-    appStore.reviewers = data;
-  },
   updateMRComments(data: IComment[]) {
     appStore.comments = data;
   },

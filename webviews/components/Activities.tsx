@@ -34,6 +34,10 @@ function Activities() {
     (a, b) => a[0]?.created_at - b[0]?.created_at,
   );
 
+  if (!allActivities.length) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div>
       <div>

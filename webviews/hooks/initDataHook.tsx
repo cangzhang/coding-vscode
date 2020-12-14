@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import appStore from 'webviews/store/appStore';
 import { actions } from 'webviews/store/constants';
 
-export default function messageTransferHook() {
+export default function initDataHook() {
   useEffect(() => {
     window.addEventListener('message', (ev) => {
       const { updateCurrentMR, toggleMRLoading, initMRReviewers, initMRActivities } = appStore;

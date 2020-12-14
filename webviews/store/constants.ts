@@ -5,7 +5,7 @@ export enum actions {
   MR_DISAPPROVE = `mr.disapprove`,
   MR_MERGE = `mr.merge`,
   MR_UPDATE_TITLE = `mr.update.title`,
-  MR_UPDATE_COMMENTS = `mr.udpate.comments`,
+  MR_UPDATE_COMMENTS = `mr.update.comments`,
   MR_ADD_COMMENT = `mr.add.comment`,
   MR_GET_ACTIVITIES = `mr.get.activities`,
   MR_TOGGLE_LOADING = `mr.update.toggleLoading`,

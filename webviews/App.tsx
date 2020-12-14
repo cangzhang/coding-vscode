@@ -5,7 +5,7 @@ import appStore from 'webviews/store/appStore';
 import persistDataHook from 'webviews/hooks/persistDataHook';
 import Activities from 'webviews/components/Activities';
 import Reviewers from 'webviews/components/Reviewers';
-import messageTransferHook from 'webviews/hooks/messageTransferHook';
+import initDataHook from 'webviews/hooks/initDataHook';
 import EditButton from 'webviews/components/EditButton';
 // import { requestUpdateMRContent } from 'webviews/service/mrService';
 
@@ -35,7 +35,7 @@ function App() {
   const { merge_request: mergeRequest } = data || {};
 
   persistDataHook();
-  messageTransferHook();
+  initDataHook();
 
   const handleKeyDown = async (event: any) => {
     if (event.key === 'Enter') {

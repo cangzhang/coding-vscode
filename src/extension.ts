@@ -64,7 +64,7 @@ export async function activate(context: vscode.ExtensionContext) {
         Panel.currentPanel?.broadcast(`mr.reviewers.init`, reviewerResp.data);
       });
       codingSrv.getMRComments(mr.iid).then((commentResp) => {
-        Panel.currentPanel?.broadcast(`mr.udpate.comments`, commentResp.data);
+        Panel.currentPanel?.broadcast(`mr.update.comments`, commentResp.data);
       });
     }),
   );
