@@ -8,3 +8,4 @@ build/
 out/
 src/typings/vscode.d.ts
 src/typings/vscode.proposed.d.ts
+*.vsix
