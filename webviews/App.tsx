@@ -7,7 +7,7 @@ import Activities from 'webviews/components/Activities';
 import Reviewers from 'webviews/components/Reviewers';
 import messageTransferHook from 'webviews/hooks/messageTransferHook';
 import EditButton from 'webviews/components/EditButton';
-import { requestUpdateMRContent } from 'webviews/service/mrService';
+// import { requestUpdateMRContent } from 'webviews/service/mrService';
 
 import {
   EmptyWrapper,
@@ -25,7 +25,7 @@ import {
 } from 'webviews/app.styles';
 
 function App() {
-  const { currentMR, updateMRTitle, toggleUpdatingDesc } = appStore;
+  const { currentMR, updateMRTitle, toggleUpdatingDesc, updateMRDesc } = appStore;
   const [isEditingTitle, setEditingTitle] = useState(false);
   const [title, setTitle] = useState(currentMR?.data?.merge_request?.title);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -59,7 +59,7 @@ function App() {
   };
 
   const onEditDesc = () => {
-    toggleUpdatingDesc();
+    toggleUpdatingDesc(true);
     setDesc(currentMR.data.merge_request.body_plan);
   };
 
@@ -68,7 +68,7 @@ function App() {
   };
 
   const onSaveDesc = async () => {
-    await requestUpdateMRContent(currentMR.iid, desc);
+    await updateMRDesc(currentMR.iid, desc);
   };
 
   if (!currentMR.iid) {
@@ -119,7 +119,9 @@ function App() {
                 <OperationBtn className={`colored`} onClick={onSaveDesc}>
                   Save
                 </OperationBtn>
-                <OperationBtn className={`colored secondary`} onClick={() => toggleUpdatingDesc()}>
+                <OperationBtn
+                  className={`colored secondary`}
+                  onClick={() => toggleUpdatingDesc(false)}>
                   Cancel
                 </OperationBtn>
               </>

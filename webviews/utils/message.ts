@@ -10,6 +10,7 @@ export class MessageHandler {
     this._commandHandler = commandHandler;
     this.lastSentReq = 0;
     this.pendingReplies = Object.create(null);
+    window.addEventListener('message', this.handleMessage.bind(this));
   }
 
   public registerCommandHandler(commandHandler: (message: any) => void) {
@@ -18,22 +19,20 @@ export class MessageHandler {
 
   public async postMessage(message: any): Promise<any> {
     const req = String(++this.lastSentReq);
-
     return new Promise<any>((resolve, reject) => {
       this.pendingReplies[req] = {
         resolve: resolve,
         reject: reject,
       };
-
       message = Object.assign(message, {
         req: req,
       });
-
-      vscode.postMessage(JSON.parse(JSON.stringify(message)) as IRequestMessage<any>);
+      vscode.postMessage(message as IRequestMessage<any>);
     });
   }
 
-  public handleMessage(event: any) {
+  // handle message should resolve promises
+  private handleMessage(event: any) {
     const message: IReplyMessage = event.data;
     if (message.seq) {
       const pendingReply = this.pendingReplies[message.seq];
@@ -48,11 +47,19 @@ export class MessageHandler {
     }
 
     if (this._commandHandler) {
-      this._commandHandler(message);
+      this._commandHandler(message.res);
     }
   }
 }
 
 export function getMessageHandler(handler: ((message: any) => void) | null) {
-  return new MessageHandler(handler);
+  let instance: MessageHandler;
+
+  return () => {
+    if (!instance) {
+      instance = new MessageHandler(handler);
+    }
+
+    return instance;
+  };
 }

@@ -1,9 +1,10 @@
 import { autoEffect, clearEffect, store } from '@risingstack/react-easy-state';
 import { IMRWebViewDetail } from 'src/typings/commonTypes';
-import { IActivity, IReviewer, IComment, IMRContent } from 'src/typings/respResult';
+import { IActivity, IReviewer, IComment } from 'src/typings/respResult';
 import { vscode } from 'webviews/constants/vscode';
 import { actions } from 'webviews/store/constants';
 import { MERGE_STATUS } from 'webviews/constants/mergeRequest';
+import { getMessageHandler } from 'webviews/utils/message';
 
 interface IReviewers {
   volunteer_reviewers: IReviewer[];
@@ -36,8 +37,8 @@ const appStore = store({
   updateMRStatus(status: MERGE_STATUS) {
     appStore.currentMR.data.merge_request.merge_status = status;
   },
-  async refetchMRActivities() {
-    const result = await vscode.postMessage({
+  async refreshMRActivities() {
+    const result = await getMessageHandler(appStore.messageHandler)().postMessage({
       command: actions.MR_GET_ACTIVITIES,
       args: appStore.currentMR.iid,
     });
@@ -45,16 +46,16 @@ const appStore = store({
     return result;
   },
   async closeMR() {
-    const result = await vscode.postMessage({
+    const result = await getMessageHandler(appStore.messageHandler)().postMessage({
       command: actions.CLOSE_MR,
       args: appStore.currentMR.iid,
     });
     appStore.updateMRStatus(MERGE_STATUS.REFUSED);
-    appStore.refetchMRActivities();
+    appStore.refreshMRActivities();
     return result;
   },
   async approveMR() {
-    const result = await vscode.postMessage({
+    const result = await getMessageHandler(appStore.messageHandler)().postMessage({
       command: actions.MR_APPROVE,
       args: appStore.currentMR.iid,
     });
@@ -64,11 +65,11 @@ const appStore = store({
     if (index >= 0) {
       appStore.reviewers.reviewers[index].value = 100;
     }
-    appStore.refetchMRActivities();
+    appStore.refreshMRActivities();
     return result;
   },
   async disapproveMR() {
-    const result = await vscode.postMessage({
+    const result = await getMessageHandler(appStore.messageHandler)().postMessage({
       command: actions.MR_DISAPPROVE,
       args: appStore.currentMR.iid,
     });
@@ -78,32 +79,32 @@ const appStore = store({
     if (index >= 0) {
       appStore.reviewers.reviewers[index].value = 0;
     }
-    appStore.refetchMRActivities();
+    appStore.refreshMRActivities();
     return result;
   },
   async mergeMR() {
-    const result = await vscode.postMessage({
+    const result = await getMessageHandler(appStore.messageHandler)().postMessage({
       command: actions.MR_MERGE,
       args: appStore.currentMR.iid,
     });
     appStore.updateMRStatus(MERGE_STATUS.ACCEPTED);
-    appStore.refetchMRActivities();
+    appStore.refreshMRActivities();
     return result;
   },
   async updateMRTitle(newTitle: string) {
-    const result = await vscode.postMessage({
+    appStore.currentMR.data.merge_request.title = newTitle;
+    const result = await getMessageHandler(appStore.messageHandler)().postMessage({
       command: actions.MR_UPDATE_TITLE,
       args: {
         iid: appStore.currentMR.iid,
         title: newTitle,
       },
     });
-    appStore.currentMR.data.merge_request.title = newTitle;
-    appStore.refetchMRActivities();
+    appStore.refreshMRActivities();
     return result;
   },
   async commentMR(comment: string) {
-    const result = await vscode.postMessage({
+    const result = await getMessageHandler(appStore.messageHandler)().postMessage({
       command: actions.MR_ADD_COMMENT,
       args: {
         id: appStore.currentMR.data.merge_request.id,
@@ -114,25 +115,62 @@ const appStore = store({
     return result;
   },
   async updateReviewers(iid: string, list: number[]) {
-    const result = await vscode.postMessage({
+    const result = await getMessageHandler(appStore.messageHandler)().postMessage({
       command: actions.MR_UPDATE_REVIEWERS,
       args: [iid, list],
     });
     return result;
   },
-  toggleUpdatingDesc() {
-    appStore.currentMR.data.editingDesc = !appStore.currentMR.data.editingDesc;
+  toggleUpdatingDesc(status?: boolean) {
+    if (typeof status === `undefined`) {
+      appStore.currentMR.data.editingDesc = !appStore.currentMR.data.editingDesc;
+    } else {
+      appStore.currentMR.data.editingDesc = status;
+    }
   },
-  updateMRDesc(iid: string, resp: IMRContent) {
+  async updateMRDesc(iid: string, content: string) {
     if (iid !== appStore.currentMR.iid) {
       return;
     }
 
+    appStore.toggleUpdatingDesc(true);
+    const resp = await getMessageHandler(appStore.messageHandler)().postMessage({
+      command: actions.MR_UPDATE_DESC,
+      args: {
+        iid,
+        content,
+      },
+    });
+
     appStore.currentMR.data.merge_request.body = resp.body;
     appStore.currentMR.data.merge_request.body_plan = resp.body_plan;
+    appStore.toggleUpdatingDesc(false);
   },
   addComment(comment: IComment) {
     appStore.comments.push(comment);
+  },
+  messageHandler(message: any) {
+    const { updateMRActivities, updateMRReviewers, updateMRComments } = appStore;
+    const { command, res } = message;
+
+    switch (command) {
+      case actions.UPDATE_MR_ACTIVITIES: {
+        updateMRActivities(res);
+        break;
+      }
+      case actions.MR_UPDATE_COMMENTS: {
+        updateMRComments(res);
+        break;
+      }
+      case actions.MR_UPDATE_REVIEWERS: {
+        res && updateMRReviewers(res);
+        break;
+      }
+      case actions.MR_ADD_COMMENT: {
+      }
+      default:
+        break;
+    }
   },
 });
 
