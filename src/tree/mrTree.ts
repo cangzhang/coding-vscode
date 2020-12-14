@@ -21,7 +21,7 @@ enum ItemType {
 }
 
 const getIcon = (name: string, theme: string) =>
-  path.join(__filename, `../../../src/assets/${theme}/${name}.png`);
+  path.join(__filename, `../../../assets/${theme}/${name}.png`);
 
 const FileModeIcons: {
   [key: string]: { light: string | vscode.Uri; dark: string | vscode.Uri };
