@@ -143,9 +143,6 @@ const appStore = store({
     appStore.toggleUpdatingDesc(false);
     appStore.refreshMRActivities();
   },
-  addComment(comment: IComment) {
-    appStore.comments.push(comment);
-  },
   initMRReviewers(list: IMRReviewers) {
     appStore.reviewers = list;
   },
@@ -161,8 +158,6 @@ const appStore = store({
         updateMRComments(res);
         break;
       }
-      case actions.MR_ADD_COMMENT: {
-      }
       default:
         break;
     }
@@ -177,6 +172,7 @@ export const persistData = () =>
       currentMR: appStore.currentMR,
       activities: appStore.activities,
       reviewers: appStore.reviewers,
+      comments: appStore.comments,
     });
   });
 export const removeDataPersist = (e: () => void) => clearEffect(e);
