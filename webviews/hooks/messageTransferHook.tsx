@@ -5,7 +5,7 @@ import { actions } from 'webviews/store/constants';
 export default function messageTransferHook() {
   useEffect(() => {
     window.addEventListener('message', (ev) => {
-      const { updateCurrentMR, toggleMRLoading, initMRReviewers } = appStore;
+      const { updateCurrentMR, toggleMRLoading, initMRReviewers, initMRActivities } = appStore;
       const { command, res } = ev?.data;
 
       switch (command) {
@@ -19,6 +19,10 @@ export default function messageTransferHook() {
         }
         case actions.MR_REVIEWERS_INIT: {
           initMRReviewers(res);
+          break;
+        }
+        case actions.MR_ACTIVITIES_INIT: {
+          initMRActivities(res);
           break;
         }
         default:

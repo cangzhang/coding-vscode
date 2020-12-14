@@ -1,6 +1,5 @@
 export enum actions {
   UPDATE_CURRENT_MR = `mr.update`,
-  UPDATE_MR_ACTIVITIES = `mr.update.activities`,
   CLOSE_MR = `mr.close`,
   MR_APPROVE = `mr.approve`,
   MR_DISAPPROVE = `mr.disapprove`,
@@ -13,4 +12,5 @@ export enum actions {
   MR_UPDATE_REVIEWERS = `mr.update.reviewers`,
   MR_UPDATE_DESC = `mr.update.desc`,
   MR_REVIEWERS_INIT = `mr.reviewers.init`,
+  MR_ACTIVITIES_INIT = `mr.activities.init`,
 }

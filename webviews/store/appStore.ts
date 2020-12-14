@@ -115,7 +115,7 @@ const appStore = store({
       args: { iid, list },
     });
     appStore.reviewers = resp;
-    return;
+    appStore.refreshMRActivities();
   },
   toggleUpdatingDesc(status?: boolean) {
     if (typeof status === `undefined`) {
@@ -141,6 +141,7 @@ const appStore = store({
     appStore.currentMR.data.merge_request.body = resp.body;
     appStore.currentMR.data.merge_request.body_plan = resp.body_plan;
     appStore.toggleUpdatingDesc(false);
+    appStore.refreshMRActivities();
   },
   addComment(comment: IComment) {
     appStore.comments.push(comment);
@@ -148,15 +149,14 @@ const appStore = store({
   initMRReviewers(list: IMRReviewers) {
     appStore.reviewers = list;
   },
+  initMRActivities(data: IActivity[]) {
+    appStore.updateMRActivities(data);
+  },
   messageHandler(message: any) {
-    const { updateMRActivities, updateMRComments } = appStore;
+    const { updateMRComments } = appStore;
     const { command, res } = message;
 
     switch (command) {
-      case actions.UPDATE_MR_ACTIVITIES: {
-        updateMRActivities(res);
-        break;
-      }
       case actions.MR_UPDATE_COMMENTS: {
         updateMRComments(res);
         break;

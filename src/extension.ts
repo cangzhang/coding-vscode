@@ -58,7 +58,7 @@ export async function activate(context: vscode.ExtensionContext) {
         });
       });
       codingSrv.getMRActivities(mr.iid).then((activityResp) => {
-        Panel.currentPanel?.broadcast(`mr.update.activities`, activityResp.data);
+        Panel.currentPanel?.broadcast(`mr.activities.init`, activityResp.data);
       });
       codingSrv.getMRReviewers(mr.iid).then((reviewerResp) => {
         Panel.currentPanel?.broadcast(`mr.reviewers.init`, reviewerResp.data);
