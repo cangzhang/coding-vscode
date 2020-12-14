@@ -15,6 +15,10 @@ interface IProps {
 const Time = styled.span`
   margin-left: 20px;
 `;
+const ActionDesc = styled.span`
+  margin-left: 1ex;
+  margin-right: 1ex;
+`;
 
 function Activity({ activity, srcBranch, desBranch }: IProps) {
   const { currentMR } = appStore;
@@ -77,7 +81,8 @@ function Activity({ activity, srcBranch, desBranch }: IProps) {
       {ACTIVITY_TYPE[action].icon}
       <div>
         <p>
-          <a href={authorUrl}>{activity.author.name}</a> <span>{ACTIVITY_TYPE[action].text}</span>
+          <a href={authorUrl}>{activity.author.name}</a>{' '}
+          <ActionDesc>{ACTIVITY_TYPE[action].text}</ActionDesc>
           {(action === 'del_source_branch' || action === 'restore_source_branch') && (
             <span>{srcBranch}</span>
           )}

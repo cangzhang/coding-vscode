@@ -2,7 +2,7 @@
   "name": "coding-plugin",
   "description": "Coding plugin for VS Code.",
   "version": "0.1.0",
-  "publisher": "coding",
+  "publisher": "coding-net",
   "license": "MIT",
   "engines": {
     "vscode": "^1.47.0"
@@ -96,7 +96,7 @@
         {
           "id": "codingPluginTree",
           "title": "CODING",
-          "icon": "src/assets/coding.svg"
+          "icon": "src/assets/coding.png"
         }
       ]
     },
@@ -105,13 +105,11 @@
         {
           "id": "mrTreeView",
           "name": "Merge Requests",
-          "icon": "src/assets/coding.svg",
           "contextualTitle": "List"
         },
         {
           "id": "releaseTreeView",
           "name": "Releases",
-          "icon": "src/assets/coding.svg",
           "contextualTitle": "List"
         }
       ]
