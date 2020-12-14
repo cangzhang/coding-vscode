@@ -1,4 +1,4 @@
-import { IMRDetail, UserResponse } from './respResult';
+import { IMRDetail, IUserItem } from './respResult';
 
 export interface IRepoInfo {
   team: string;
@@ -13,7 +13,7 @@ export enum TokenType {
 
 export interface ISessionData {
   id: string;
-  user: UserResponse | null;
+  user: IUserItem | null;
   accessToken: string;
   refreshToken: string;
 }
@@ -36,6 +36,7 @@ export interface IMRWebViewDetail {
   repoInfo: IRepoInfo;
   data: IMRDetail & {
     loading: boolean;
+    editingDesc: boolean;
   };
-  user: UserResponse;
+  user: IUserItem;
 }

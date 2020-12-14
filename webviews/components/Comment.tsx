@@ -40,7 +40,7 @@ const ChildCommentContent = styled.div`
 
 function Comment({ comment }: IProps) {
   const renderChildComments = () => {
-    return comment.childComments?.map((c) => {
+    return comment?.childComments?.map((c) => {
       return (
         <ChildComment key={c.id}>
           <AuthorLink for={c.author} />
@@ -55,14 +55,14 @@ function Comment({ comment }: IProps) {
   return (
     <Root>
       <Header>
-        <Avatar for={comment.author} />{' '}
+        <Avatar for={comment?.author} />{' '}
         <AuthorLinkWrap>
-          <AuthorLink for={comment.author} />
+          <AuthorLink for={comment?.author} />
         </AuthorLinkWrap>
-        <Time>commented at {getTime(comment.created_at)}</Time>
+        <Time>commented at {getTime(comment?.created_at)}</Time>
       </Header>
       <Body>
-        <div dangerouslySetInnerHTML={{ __html: comment.content }} />
+        <div dangerouslySetInnerHTML={{ __html: comment?.content }} />
         {renderChildComments()}
       </Body>
     </Root>

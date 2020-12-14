@@ -1,75 +1,46 @@
-import React, { useRef, useState } from 'react';
-import styled from 'styled-components';
-
+import React, { FormEvent, useRef, useState } from 'react';
 import { view } from '@risingstack/react-easy-state';
+
 import appStore from 'webviews/store/appStore';
 import persistDataHook from 'webviews/hooks/persistDataHook';
 import Activities from 'webviews/components/Activities';
 import Reviewers from 'webviews/components/Reviewers';
-import messageTransferHook from 'webviews/hooks/messageTransferHook';
+import initDataHook from 'webviews/hooks/initDataHook';
+import EditButton from 'webviews/components/EditButton';
+// import { requestUpdateMRContent } from 'webviews/service/mrService';
 
-const EmptyWrapper = styled.div`
-  font-size: 16px;
-`;
-const TitleWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  font-size: 20px;
-
-  .edit {
-    display: none;
-  }
-
-  &:hover .edit {
-    display: block;
-  }
-`;
-const Row = styled.div`
-  display: flex;
-  align-items: center;
-  margin: 16px 0 0;
-  padding-bottom: 15px;
-  border-bottom: 1px solid var(--vscode-list-inactiveSelectionBackground);
-`;
-const Desc = styled.article`
-  border: 1px solid gray;
-  padding: 10px;
-`;
-const BodyWrap = styled.div`
-  display: flex;
-`;
-const Body = styled.div`
-  flex: 1;
-`;
-const Sidebar = styled.div`
-  width: 200px;
-  margin-left: 20px;
-`;
-const EditBtn = styled.span`
-  width: 16px;
-  height: 16px;
-  margin-left: 10px;
-  cursor: pointer;
-`;
-const Empty = styled.div`
-  text-align: center;
-`;
+import {
+  EmptyWrapper,
+  TitleWrapper,
+  Row,
+  Desc,
+  BodyWrap,
+  Body,
+  Sidebar,
+  Empty,
+  BranchName,
+  EditBtn,
+  OperationBtn,
+  SectionTitle,
+} from 'webviews/app.styles';
 
 function App() {
-  const { currentMR, updateMRTitle } = appStore;
-  const [isEditing, setEditing] = useState(false);
+  const { currentMR, updateMRTitle, toggleUpdatingDesc, updateMRDesc } = appStore;
+  const [isEditingTitle, setEditingTitle] = useState(false);
   const [title, setTitle] = useState(currentMR?.data?.merge_request?.title);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const [desc, setDesc] = useState(``);
+
   const { repoInfo, data } = currentMR;
   const { merge_request: mergeRequest } = data || {};
 
   persistDataHook();
-  messageTransferHook();
+  initDataHook();
 
   const handleKeyDown = async (event: any) => {
     if (event.key === 'Enter') {
       await updateMRTitle(title);
-      setEditing(false);
+      setEditingTitle(false);
     }
   };
 
@@ -83,28 +54,41 @@ function App() {
   };
 
   const handleEdit = () => {
-    setEditing(true);
+    setEditingTitle(true);
     inputRef.current?.focus();
+  };
+
+  const onEditDesc = () => {
+    toggleUpdatingDesc(true);
+    setDesc(currentMR.data.merge_request.body_plan);
+  };
+
+  const onChangeDesc = (ev: FormEvent<HTMLTextAreaElement>) => {
+    setDesc(ev.currentTarget.value);
+  };
+
+  const onSaveDesc = async () => {
+    await updateMRDesc(currentMR.iid, desc);
   };
 
   if (!currentMR.iid) {
     return <EmptyWrapper>Please select an merge request first.</EmptyWrapper>;
   }
 
-  if (data.loading) {
+  if (data?.loading) {
     return <EmptyWrapper>Loading...</EmptyWrapper>;
   }
 
   return (
     <div>
       <TitleWrapper>
-        {isEditing ? (
+        {isEditingTitle ? (
           <input
             type='text'
             value={title}
             ref={(ref) => (inputRef.current = ref)}
-            onBlur={() => setEditing(false)}
-            onFocus={() => setEditing(true)}
+            onBlur={() => setEditingTitle(false)}
+            onFocus={() => setEditingTitle(true)}
             onKeyDown={handleKeyDown}
             onChange={handleTitleChange}
           />
@@ -116,29 +100,53 @@ function App() {
               #{currentMR.iid}
             </a>
             )
-            <EditBtn
-              className='edit'
-              onClick={handleEdit}
-              dangerouslySetInnerHTML={{ __html: require('./assets/edit.svg') }}
-            />
+            <EditBtn onClick={handleEdit} />
           </>
         )}
       </TitleWrapper>
       <Row>
         <div id='status'>{mergeRequest?.merge_status}</div>
-        <code>{mergeRequest?.srcBranch}</code> → <code>{mergeRequest?.desBranch}</code>
+        <BranchName>{mergeRequest?.srcBranch}</BranchName>→
+        <BranchName>{mergeRequest?.desBranch}</BranchName>
       </Row>
       <BodyWrap>
         <Body>
-          <h3>Description</h3>
-          <Desc>
-            {mergeRequest?.body ? (
-              <div dangerouslySetInnerHTML={{ __html: mergeRequest?.body }} />
-            ) : (
-              <Empty>Empty</Empty>
+          <SectionTitle>
+            Description
+            {!currentMR.data.editingDesc && <EditButton onClick={onEditDesc} />}
+            {currentMR.data.editingDesc && (
+              <>
+                <OperationBtn className={`colored`} onClick={onSaveDesc}>
+                  Save
+                </OperationBtn>
+                <OperationBtn
+                  className={`colored secondary`}
+                  onClick={() => toggleUpdatingDesc(false)}>
+                  Cancel
+                </OperationBtn>
+              </>
             )}
-          </Desc>
-          <h3>Activities</h3>
+          </SectionTitle>
+          {!currentMR.data.editingDesc && (
+            <Desc>
+              {mergeRequest?.body ? (
+                <div dangerouslySetInnerHTML={{ __html: mergeRequest?.body }} />
+              ) : (
+                <Empty>This MR has no description.</Empty>
+              )}
+            </Desc>
+          )}
+          {currentMR.data.editingDesc && (
+            <textarea
+              name='desc'
+              id='mr-desc'
+              cols={30}
+              rows={20}
+              value={desc}
+              onChange={onChangeDesc}
+            />
+          )}
+          <SectionTitle>Activities</SectionTitle>
           <Activities />
         </Body>
         <Sidebar>

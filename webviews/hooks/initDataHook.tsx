@@ -2,16 +2,10 @@ import { useEffect } from 'react';
 import appStore from 'webviews/store/appStore';
 import { actions } from 'webviews/store/constants';
 
-export default function messageTransferHook() {
+export default function initDataHook() {
   useEffect(() => {
     window.addEventListener('message', (ev) => {
-      const {
-        updateCurrentMR,
-        updateMRActivities,
-        updateMRReviewers,
-        updateMRComments,
-        toggleMRLoading,
-      } = appStore;
+      const { updateCurrentMR, toggleMRLoading, initMRReviewers, initMRActivities } = appStore;
       const { command, res } = ev?.data;
 
       switch (command) {
@@ -23,16 +17,12 @@ export default function messageTransferHook() {
           updateCurrentMR(res);
           break;
         }
-        case actions.UPDATE_MR_ACTIVITIES: {
-          updateMRActivities(res);
+        case actions.MR_REVIEWERS_INIT: {
+          initMRReviewers(res);
           break;
         }
-        case actions.UPDATE_MR_REVIEWERS: {
-          updateMRReviewers(res);
-          break;
-        }
-        case actions.MR_UPDATE_COMMENTS: {
-          updateMRComments(res);
+        case actions.MR_ACTIVITIES_INIT: {
+          initMRActivities(res);
           break;
         }
         default:

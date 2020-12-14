@@ -70,26 +70,46 @@ function AddComment() {
     return (
       <ActionWrap>
         {showAllowMergeBtn && !getAgreed() && (
-          <button data-command='approveMR' onClick={handleClick} disabled={isBusy}>
+          <button
+            className={`colored`}
+            data-command='approveMR'
+            onClick={handleClick}
+            disabled={isBusy}>
             Approve
           </button>
         )}
         {showAllowMergeBtn && getAgreed() && (
-          <button data-command='disapproveMR' onClick={handleClick} disabled={isBusy}>
+          <button
+            className={`colored`}
+            data-command='disapproveMR'
+            onClick={handleClick}
+            disabled={isBusy}>
             Disapprove
           </button>
         )}
         {showMergeBtn && (
-          <button data-command='mergeMR' onClick={handleClick} disabled={isBusy}>
+          <button
+            className={`colored`}
+            data-command='mergeMR'
+            onClick={handleClick}
+            disabled={isBusy}>
             Merge
           </button>
         )}
         {showCloseBtn && (
-          <button data-command='closeMR' onClick={handleClick} disabled={isBusy}>
+          <button
+            className={`colored`}
+            data-command='closeMR'
+            onClick={handleClick}
+            disabled={isBusy}>
             Close Merge Request
           </button>
         )}
-        <button data-command='commentMR' onClick={handleClick} disabled={isBusy || !comment}>
+        <button
+          className={`colored`}
+          data-command='commentMR'
+          onClick={handleClick}
+          disabled={isBusy || !comment}>
           Comment
         </button>
       </ActionWrap>
