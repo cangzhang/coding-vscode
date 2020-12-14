@@ -106,7 +106,7 @@ export class Panel {
           break;
         case 'mr.update.reviewers': {
           try {
-            const [iid, selected]: [string, number[]] = args;
+            const { iid, list: selected }: { iid: string; list: number[] } = args;
             const {
               data: { list: memberList },
             } = await this._codingSrv.getProjectMembers();
@@ -140,7 +140,7 @@ export class Panel {
 
             await Promise.all(tasks);
             const resp = await this._codingSrv.getMRReviewers(iid);
-            this.broadcast(command, resp.data);
+            this._replyMessage(message, resp.data);
           } catch (err) {}
           break;
         }

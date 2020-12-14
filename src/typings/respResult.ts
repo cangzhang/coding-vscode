@@ -165,11 +165,13 @@ export interface IReviewer {
   volunteer: string;
 }
 
+export interface IMRReviewers {
+  volunteer_reviewers: IReviewer[];
+  reviewers: IReviewer[];
+}
+
 export interface IMRReviewersResponse extends CodingResponse {
-  data: {
-    volunteer_reviewers: IReviewer[];
-    reviewers: IReviewer[];
-  };
+  data: IMRReviewers;
 }
 
 export interface IComment {

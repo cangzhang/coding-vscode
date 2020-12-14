@@ -12,4 +12,5 @@ export enum actions {
   MR_TOGGLE_LOADING = `mr.update.toggleLoading`,
   MR_UPDATE_REVIEWERS = `mr.update.reviewers`,
   MR_UPDATE_DESC = `mr.update.desc`,
+  MR_REVIEWERS_INIT = `mr.reviewers.init`,
 }

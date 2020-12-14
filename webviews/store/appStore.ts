@@ -1,15 +1,10 @@
 import { autoEffect, clearEffect, store } from '@risingstack/react-easy-state';
 import { IMRWebViewDetail } from 'src/typings/commonTypes';
-import { IActivity, IReviewer, IComment } from 'src/typings/respResult';
+import { IActivity, IComment, IMRReviewers } from 'src/typings/respResult';
 import { vscode } from 'webviews/constants/vscode';
 import { actions } from 'webviews/store/constants';
 import { MERGE_STATUS } from 'webviews/constants/mergeRequest';
 import { getMessageHandler } from 'webviews/utils/message';
-
-interface IReviewers {
-  volunteer_reviewers: IReviewer[];
-  reviewers: IReviewer[];
-}
 
 const appStore = store({
   currentMR: (vscode.getState()?.currentMR || {}) as IMRWebViewDetail,
@@ -17,7 +12,7 @@ const appStore = store({
   reviewers: (vscode.getState()?.reviewers || {
     volunteer_reviewers: [],
     reviewers: [],
-  }) as IReviewers,
+  }) as IMRReviewers,
   comments: (vscode.getState()?.comments || []) as IComment[],
   updateCurrentMR(data: IMRWebViewDetail) {
     appStore.currentMR = data;
@@ -25,7 +20,7 @@ const appStore = store({
   updateMRActivities(data: IActivity[]) {
     appStore.activities = data;
   },
-  updateMRReviewers(data: IReviewers) {
+  updateMRReviewers(data: IMRReviewers) {
     appStore.reviewers = data;
   },
   updateMRComments(data: IComment[]) {
@@ -115,11 +110,12 @@ const appStore = store({
     return result;
   },
   async updateReviewers(iid: string, list: number[]) {
-    const result = await getMessageHandler(appStore.messageHandler)().postMessage({
+    const resp = await getMessageHandler(appStore.messageHandler)().postMessage({
       command: actions.MR_UPDATE_REVIEWERS,
-      args: [iid, list],
+      args: { iid, list },
     });
-    return result;
+    appStore.reviewers = resp;
+    return;
   },
   toggleUpdatingDesc(status?: boolean) {
     if (typeof status === `undefined`) {
@@ -149,8 +145,11 @@ const appStore = store({
   addComment(comment: IComment) {
     appStore.comments.push(comment);
   },
+  initMRReviewers(list: IMRReviewers) {
+    appStore.reviewers = list;
+  },
   messageHandler(message: any) {
-    const { updateMRActivities, updateMRReviewers, updateMRComments } = appStore;
+    const { updateMRActivities, updateMRComments } = appStore;
     const { command, res } = message;
 
     switch (command) {
@@ -160,10 +159,6 @@ const appStore = store({
       }
       case actions.MR_UPDATE_COMMENTS: {
         updateMRComments(res);
-        break;
-      }
-      case actions.MR_UPDATE_REVIEWERS: {
-        res && updateMRReviewers(res);
         break;
       }
       case actions.MR_ADD_COMMENT: {
