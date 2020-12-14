@@ -1,0 +1,12 @@
+.vscode
+node_modules
+out/
+src/
+tsconfig.json
+webpack.config.js
+webviews/
+.gitignore
+.editorconfig
+.prettierignore
+.prettierrc.js
+yarn.lock
