@@ -15,7 +15,7 @@
     "onCommand:codingPlugin.login",
     "onView:mrTreeView"
   ],
-  "icon": "src/assets/coding.png",
+  "icon": "assets/coding.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/cangzhang/coding-vscode.git"
@@ -97,7 +97,7 @@
         {
           "id": "codingPluginTree",
           "title": "CODING",
-          "icon": "src/assets/coding.png"
+          "icon": "assets/coding.png"
         }
       ]
     },
