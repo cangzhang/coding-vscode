@@ -1,7 +1,8 @@
 {
   "name": "coding-plugin",
-  "description": "Coding plugin for VS Code.",
-  "version": "0.2.0",
+  "displayName": "CODING Merge Requests & Releases",
+  "description": "CODING plugin for VS Code.",
+  "version": "0.2.1",
   "publisher": "coding-net",
   "license": "MIT",
   "engines": {
@@ -119,13 +120,14 @@
   "scripts": {
     "postinstall": "cd src/typings && npx vscode-dts master && npx vscode-dts dev master",
     "vscode:prepublish": "npm run compile",
-    "compile": "npm-run-all -p compile:*",
+    "compile": "npm-run-all -s compile:* clean",
     "compile:extension": "tsc -p ./src",
     "compile:webviews": "webpack --config webpack.config.js",
     "watch": "npm-run-all -p watch:*",
     "watch:extension": "tsc -watch -p ./src",
     "watch:webviews": "webpack --watch --mode development",
     "lint": "eslint . --ext .ts,.tsx",
+    "clean": "rm -rf node_modules/ && yarn install --prod=true --force && rm -rf node_modules/@babel node_modules/@types node_modules/react*",
     "package": "npx vsce package",
     "release": "npx vsce publish"
   },
@@ -140,10 +142,10 @@
   "dependencies": {
     "@risingstack/react-easy-state": "^6.3.0",
     "dayjs": "^1.9.6",
-    "got": "^11.7.0",
-    "keytar": "^7.0.0",
+    "got": "^11.8.1",
+    "keytar": "^7.2.0",
     "module-alias": "^2.2.2",
-    "nanoid": "^3.1.16",
+    "nanoid": "^3.1.20",
     "react": "^17.0.0",
     "react-dom": "^17.0.0",
     "styled-components": "^5.2.1"
