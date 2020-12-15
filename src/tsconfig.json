@@ -2,6 +2,8 @@
   "compilerOptions": {
     "module": "commonjs",
     "target": "es2019",
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
     "lib": ["es2019", "dom", "es2020"],
     "outDir": "../out",
     "sourceMap": true,

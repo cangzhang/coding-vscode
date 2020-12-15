@@ -1,7 +1,8 @@
 {
   "name": "coding-plugin",
+  "displayName": "CODING Merge Requests & Releases",
   "description": "Coding plugin for VS Code.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publisher": "coding-net",
   "license": "MIT",
   "engines": {
@@ -120,14 +121,15 @@
     "postinstall": "cd src/typings && npx vscode-dts master && npx vscode-dts dev master",
     "vscode:prepublish": "npm run compile",
     "compile": "npm-run-all -p compile:*",
+    "#compile:extension": "webpack --mode production --config webpack.config.extension.js",
     "compile:extension": "tsc -p ./src",
-    "compile:webviews": "webpack --config webpack.config.js",
+    "compile:webviews": "webpack --config webpack.config.webview.js",
     "watch": "npm-run-all -p watch:*",
     "watch:extension": "tsc -watch -p ./src",
     "watch:webviews": "webpack --watch --mode development",
     "lint": "eslint . --ext .ts,.tsx",
-    "package": "npx vsce package",
-    "release": "npx vsce publish"
+    "package": "npx vsce package --yarn",
+    "release": "npx vsce publish --yarn"
   },
   "babel": {
     "plugins": [
@@ -140,7 +142,7 @@
   "dependencies": {
     "@risingstack/react-easy-state": "^6.3.0",
     "dayjs": "^1.9.6",
-    "got": "^11.7.0",
+    "got": "^11.8.1",
     "keytar": "^7.0.0",
     "module-alias": "^2.2.2",
     "nanoid": "^3.1.16",
