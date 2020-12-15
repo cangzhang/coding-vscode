@@ -24,6 +24,9 @@ import { IRepoInfo, ISessionData, TokenType } from 'src/typings/commonTypes';
 import { keychain } from 'src/common/keychain';
 import Logger from 'src/common/logger';
 
+// @ts-ignore
+import * as pkgInfo from '../package.json';
+
 const AUTH_SERVER = `https://x5p7m.csb.app`;
 const ClientId = `ff768664c96d04235b1cc4af1e3b37a8`;
 const ClientSecret = `d29ebb32cab8b5f0a643b5da7dcad8d1469312c7`;
@@ -113,7 +116,7 @@ export class CodingServer {
 
   public async startOAuth(team: string, scopes: string) {
     const state = nanoid();
-    const { name, publisher } = require('../package.json');
+    const { name, publisher } = pkgInfo;
     const callbackUri = await vscode.env.asExternalUri(
       vscode.Uri.parse(`${vscode.env.uriScheme}://${publisher}.${name}/on-did-authenticate`),
     );
