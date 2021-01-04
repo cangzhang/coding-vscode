@@ -146,6 +146,14 @@ const appStore = store({
   initMRActivities(data: IActivity[]) {
     appStore.updateMRActivities(data);
   },
+  async fetchMRStatus(iid: string) {
+    const resp = await getMessageHandler(appStore.messageHandler)().postMessage({
+      command: actions.MR_FETCH_STATUS,
+      args: { iid },
+    });
+
+    return resp;
+  },
   messageHandler(message: any) {
     const { updateMRComments } = appStore;
     const { command, res } = message;

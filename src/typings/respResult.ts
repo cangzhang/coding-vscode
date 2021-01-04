@@ -244,3 +244,25 @@ export interface IMRContentResp extends CodingResponse {
 export interface ICreateCommentResp extends CodingResponse {
   data: IComment;
 }
+
+export interface IMRStatusItem {
+  state: string;
+  sha: string;
+  context: string;
+  target_url: string;
+  description: string;
+  ignore: boolean;
+}
+
+export interface IMRStatus {
+  state: string;
+  pendingStateCount: number;
+  successStateCount: number;
+  failureStateCount: number;
+  errorStateCount: number;
+  statuses: IMRStatusItem[];
+}
+
+export interface IMRStatusResp extends CodingResponse {
+  data: IMRStatus;
+}

@@ -17,6 +17,7 @@ import {
   IMemberListResp,
   IMRContentResp,
   ICreateCommentResp,
+  IMRStatusResp,
 } from 'src/typings/respResult';
 import { PromiseAdapter, promiseFromEvent, parseQuery, parseCloneUrl } from 'src/common/utils';
 import { GitService } from 'src/common/gitService';
@@ -96,6 +97,13 @@ export class CodingServer {
       await vscode.commands.executeCommand('setContext', 'hasRepo', !!repoInfo?.repo);
       const result = await this.getUserInfo(repoInfo?.team || ``, accessToken);
       const { data: userInfo } = result;
+
+      if (userInfo.team !== repoInfo?.team) {
+        this._loggedIn = false;
+        await vscode.commands.executeCommand('setContext', 'loggedIn', this._loggedIn);
+        throw new Error(`team not match`);
+      }
+
       const ret: ISessionData = {
         id: nanoid(),
         user: userInfo,
@@ -670,6 +678,27 @@ export class CodingServer {
           form: {
             content,
           },
+          searchParams: {
+            access_token: this._session?.accessToken,
+          },
+        })
+        .json();
+
+      if (resp.code) {
+        return Promise.reject(resp);
+      }
+
+      return resp;
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+
+  public async fetchMRStatus(iid: string) {
+    try {
+      const { repoApiPrefix } = await this.getApiPrefix();
+      const resp: IMRStatusResp = await got
+        .get(`${repoApiPrefix}/merge/${iid}/commit-statuses`, {
           searchParams: {
             access_token: this._session?.accessToken,
           },

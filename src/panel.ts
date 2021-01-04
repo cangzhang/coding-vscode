@@ -152,6 +152,14 @@ export class Panel {
           } catch (e) {}
           break;
         }
+        case `mr.fetch.status`: {
+          try {
+            const { iid } = args;
+            const resp = await this._codingSrv.fetchMRStatus(iid);
+            this._replyMessage(message, resp.data);
+          } catch (e) {}
+          break;
+        }
         default:
           return this.MESSAGE_UNHANDLED;
       }

@@ -3,8 +3,8 @@ import styled from 'styled-components';
 import { view } from '@risingstack/react-easy-state';
 
 import appStore from 'webviews/store/appStore';
-import { Avatar, AuthorLink } from 'webviews/components/User';
-import EditButton from 'webviews/components/EditButton';
+import { Avatar, AuthorLink } from 'webviews/components/mr/User';
+import EditButton from 'webviews/components/mr/EditButton';
 
 const Title = styled.div`
   margin-top: 15px;
