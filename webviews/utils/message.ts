@@ -1,14 +1,15 @@
 import { vscode } from 'webviews/constants/vscode';
+import { nanoid } from 'nanoid';
 import { IRequestMessage, IReplyMessage } from 'src/typings/message';
 
 export class MessageHandler {
   private _commandHandler: ((message: any) => void) | null;
-  private lastSentReq: number;
+  // private lastSentReq: string;
   private pendingReplies: any;
 
   constructor(commandHandler: any) {
     this._commandHandler = commandHandler;
-    this.lastSentReq = 0;
+    // this.lastSentReq = nanoid();
     this.pendingReplies = Object.create(null);
     window.addEventListener('message', this.handleMessage.bind(this));
   }
@@ -18,7 +19,7 @@ export class MessageHandler {
   }
 
   public async postMessage(message: any): Promise<any> {
-    const req = String(++this.lastSentReq);
+    const req = nanoid();
     return new Promise<any>((resolve, reject) => {
       this.pendingReplies[req] = {
         resolve: resolve,

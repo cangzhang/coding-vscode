@@ -53,7 +53,7 @@ function App() {
           await onRefreshStatus();
         }, 30 * 1000);
       }
-    }, 5 * 1000);
+    }, 3 * 1000);
 
     return () => {
       window.clearTimeout(statusChecker.current);

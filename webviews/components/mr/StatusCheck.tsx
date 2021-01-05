@@ -59,7 +59,7 @@ function StatusCheck(props: Props) {
             );
           })
         ) : (
-          <li>No related job(s) found</li>
+          <li>No related job found</li>
         )}
       </ul>
     </>
