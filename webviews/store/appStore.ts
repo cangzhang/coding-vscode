@@ -106,10 +106,10 @@ const appStore = store({
     appStore.comments.push([result] as any);
     return result;
   },
-  async updateReviewers(iid: string, list: number[]) {
+  async updateReviewers(iid: string, list: number[], author: string) {
     const resp = await getMessageHandler(appStore.messageHandler)().postMessage({
       command: actions.MR_UPDATE_REVIEWERS,
-      args: { iid, list },
+      args: { iid, list, author },
     });
     appStore.reviewers = resp;
     appStore.refreshMRActivities();

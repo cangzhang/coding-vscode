@@ -106,12 +106,17 @@ export class Panel {
           break;
         case 'mr.update.reviewers': {
           try {
-            const { iid, list: selected }: { iid: string; list: number[] } = args;
+            const {
+              iid,
+              list: selected,
+              author,
+            }: { iid: string; list: number[]; author: string } = args;
             const {
               data: { list: memberList },
             } = await this._codingSrv.getProjectMembers();
+
             const list = memberList
-              .filter((i) => i.user.global_key !== this._codingSrv.session?.user?.global_key)
+              .filter((i) => i.user.global_key !== author)
               .map((i) => ({
                 label: i.user.name,
                 description: i.user.global_key,

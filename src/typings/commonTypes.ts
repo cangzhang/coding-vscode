@@ -1,4 +1,4 @@
-import { IMRDetail, IUserItem } from './respResult';
+import { IMRDetail, IMRStatusItem, IUserItem } from './respResult';
 
 export interface IRepoInfo {
   team: string;
@@ -37,6 +37,7 @@ export interface IMRWebViewDetail {
   data: IMRDetail & {
     loading: boolean;
     editingDesc: boolean;
+    commit_statuses: IMRStatusItem[];
   };
   user: IUserItem;
 }

@@ -20,7 +20,7 @@ const rotate = keyframes`
   }
 `;
 
-const Button = styled.button`
+const Button = styled(({ height, width, rotate, ...rest }: Props) => <button {...rest} />)`
   border: unset;
   background: unset;
   width: 20px;
@@ -42,6 +42,12 @@ const Button = styled.button`
     width: ${(props: Props) => props.height || 16}px;
     height: ${(props: Props) => props.width || 16}px;
     overflow: hidden;
+    animation: ${(props: Props) =>
+      props.rotate
+        ? css`
+            ${rotate} 2s linear infinite
+          `
+        : css``};
   }
 
   svg path {

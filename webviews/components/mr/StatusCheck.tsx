@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import styled from 'styled-components';
 
+import { sleep } from 'webviews/utils/helper';
 import { IMRStatus } from 'src/typings/respResult';
 import { SectionTitle } from 'webviews/app.styles';
 import RefreshIcon from 'webviews/assets/refresh.svg';
@@ -7,15 +9,27 @@ import IconButton from 'webviews/components/IconButton';
 
 interface Props {
   data: IMRStatus | null;
-  onRefresh: () => Promise<any>;
+  onRefresh: (...args: any[]) => Promise<any>;
 }
 
+const ListItem = styled.li`
+  i {
+    margin-left: 2ex;
+  }
+`;
+
 function StatusCheck(props: Props) {
+  const { data } = props;
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = async () => {
+    if (refreshing) {
+      return;
+    }
+
     setRefreshing(true);
-    await Promise.allSettled([props.onRefresh]);
+    // minimum 1s
+    await Promise.allSettled([props.onRefresh, sleep(1000)]);
     setRefreshing(false);
   };
 
@@ -33,14 +47,20 @@ function StatusCheck(props: Props) {
         </IconButton>
       </SectionTitle>
       <ul>
-        {props.data?.statuses.map((i) => {
-          return (
-            <li key={i.context}>
-              {i.context}
-              <i>{i.description}</i>
-            </li>
-          );
-        })}
+        {data?.statuses ? (
+          data?.statuses.map((i) => {
+            return (
+              <ListItem key={i.context}>
+                {i.context}
+                <i>
+                  <a href={i.target_url}>{i.description}</a>
+                </i>
+              </ListItem>
+            );
+          })
+        ) : (
+          <li>No Job for now</li>
+        )}
       </ul>
     </>
   );

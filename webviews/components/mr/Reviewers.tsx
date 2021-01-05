@@ -32,7 +32,7 @@ function Reviewers() {
 
   const onUpdateReviewer = useCallback(() => {
     const list = allReviewers.map((i) => i.reviewer.id);
-    updateReviewers(currentMR.iid, list);
+    updateReviewers(currentMR.iid, list, currentMR.data.merge_request.author.global_key);
   }, [allReviewers]);
 
   return (
