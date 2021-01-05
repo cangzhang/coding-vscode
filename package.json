@@ -2,7 +2,7 @@
   "name": "coding-plugin",
   "displayName": "CODING Merge Requests & Releases",
   "description": "CODING plugin for VS Code.",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "publisher": "coding-net",
   "license": "MIT",
   "engines": {
@@ -19,7 +19,7 @@
   "icon": "assets/coding.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/cangzhang/coding-vscode.git"
+    "url": "https://github.com/Coding/coding-vscode.git"
   },
   "main": "./out/extension.js",
   "contributes": {
