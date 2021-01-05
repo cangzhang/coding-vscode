@@ -36,14 +36,12 @@ function AddComment() {
   const showAllowMergeBtn = mrStatusOk && mergeRequest?.author?.id !== user?.id;
 
   const getAgreed = () => {
-    let agreed = true;
     const index = reviewers.reviewers.findIndex((r) => r.reviewer.id === user.id);
-
+    let agreed = reviewers.volunteer_reviewers.findIndex((r) => r.reviewer.id === user.id) >= 0;
     if (index >= 0) {
       agreed = reviewers.reviewers[index].value === 100;
-    } else {
-      agreed = reviewers.volunteer_reviewers.findIndex((r) => r.reviewer.id === user.id) >= 0;
     }
+
     return agreed;
   };
 

@@ -20,6 +20,8 @@ enum ItemType {
   Node = `node`,
 }
 
+const capitalized = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
+
 const getIcon = (name: string, theme: string) =>
   path.join(__filename, `../../../assets/${theme}/${name}.png`);
 
@@ -58,7 +60,7 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
   private _disposables: vscode.Disposable[];
 
   private _context: vscode.ExtensionContext;
-  private _service: CodingServer;
+  private readonly _service: CodingServer;
 
   constructor(context: vscode.ExtensionContext, service: CodingServer) {
     this._context = context;
@@ -83,7 +85,7 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
 
   getChildren(element?: ListItem<ITreeNode>): Thenable<ListItem<ITreeNode>[]> {
     if (!this._service.loggedIn) {
-      vscode.window.showErrorMessage(`[MR Tree] Invalid credentials.`);
+      console.error(`[MR Tree] Invalid credentials.`);
       return Promise.resolve([]);
     }
 
@@ -94,17 +96,13 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
 
     if (!element) {
       return Promise.resolve([
+        new CategoryItem(capitalized(MRType.Open), MRType.Open, TreeItemCollapsibleState.Collapsed),
         new CategoryItem(
-          MRType.Open.toUpperCase(),
-          MRType.Open,
-          TreeItemCollapsibleState.Collapsed,
-        ),
-        new CategoryItem(
-          MRType.Closed.toUpperCase(),
+          capitalized(MRType.Closed),
           MRType.Closed,
           TreeItemCollapsibleState.Collapsed,
         ),
-        new CategoryItem(MRType.All.toUpperCase(), MRType.All, TreeItemCollapsibleState.Collapsed),
+        new CategoryItem(capitalized(MRType.All), MRType.All, TreeItemCollapsibleState.Collapsed),
       ]);
     }
 
@@ -115,7 +113,7 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
           .then((resp) => {
             if (resp.code) {
               const msg = Object.values(resp.msg || {})[0];
-              vscode.window.showErrorMessage(`[MR] list: ${msg}`);
+              console.error(`[MR] list: ${msg}`);
               return [];
             }
 

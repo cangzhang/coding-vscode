@@ -13,4 +13,5 @@ export enum actions {
   MR_UPDATE_DESC = `mr.update.desc`,
   MR_REVIEWERS_INIT = `mr.reviewers.init`,
   MR_ACTIVITIES_INIT = `mr.activities.init`,
+  MR_FETCH_STATUS = `mr.fetch.status`,
 }

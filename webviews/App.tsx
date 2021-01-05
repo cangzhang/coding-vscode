@@ -1,13 +1,16 @@
-import React, { FormEvent, useRef, useState } from 'react';
+import React, { FormEvent, useEffect, useRef, useState, useCallback } from 'react';
 import { view } from '@risingstack/react-easy-state';
+
+import { IMRStatus } from 'src/typings/respResult';
 
 import appStore from 'webviews/store/appStore';
 import persistDataHook from 'webviews/hooks/persistDataHook';
-import Activities from 'webviews/components/Activities';
-import Reviewers from 'webviews/components/Reviewers';
 import initDataHook from 'webviews/hooks/initDataHook';
-import EditButton from 'webviews/components/EditButton';
-// import { requestUpdateMRContent } from 'webviews/service/mrService';
+
+import Activities from 'webviews/components/mr/Activities';
+import Reviewers from 'webviews/components/mr/Reviewers';
+import EditButton from 'webviews/components/mr/EditButton';
+import StatusCheck from 'webviews/components/mr/StatusCheck';
 
 import {
   EmptyWrapper,
@@ -25,17 +28,45 @@ import {
 } from 'webviews/app.styles';
 
 function App() {
-  const { currentMR, updateMRTitle, toggleUpdatingDesc, updateMRDesc } = appStore;
+  const { currentMR, updateMRTitle, toggleUpdatingDesc, updateMRDesc, fetchMRStatus } = appStore;
   const [isEditingTitle, setEditingTitle] = useState(false);
   const [title, setTitle] = useState(currentMR?.data?.merge_request?.title);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [desc, setDesc] = useState(``);
+  const statusChecker = useRef<undefined | number>();
+  const [statusData, setStatusData] = useState<IMRStatus | null>(null);
 
   const { repoInfo, data } = currentMR;
   const { merge_request: mergeRequest } = data || {};
 
   persistDataHook();
   initDataHook();
+
+  useEffect(() => {
+    statusChecker.current = window.setTimeout(async () => {
+      try {
+        await onRefreshStatus();
+      } finally {
+        window.clearTimeout(statusChecker.current);
+
+        statusChecker.current = window.setInterval(async () => {
+          await onRefreshStatus();
+        }, 30 * 1000);
+      }
+    }, 3 * 1000);
+
+    return () => {
+      window.clearTimeout(statusChecker.current);
+      window.clearInterval(statusChecker.current);
+      setStatusData(null);
+    };
+  }, [currentMR.iid]);
+
+  const onRefreshStatus = useCallback(async () => {
+    const resp = await fetchMRStatus(currentMR.iid);
+    setStatusData(resp);
+    return null;
+  }, [currentMR.iid]);
 
   const handleKeyDown = async (event: any) => {
     if (event.key === 'Enter') {
@@ -146,6 +177,9 @@ function App() {
               onChange={onChangeDesc}
             />
           )}
+
+          <StatusCheck data={statusData} onRefresh={onRefreshStatus} />
+
           <SectionTitle>Activities</SectionTitle>
           <Activities />
         </Body>
