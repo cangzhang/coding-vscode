@@ -1,5 +1,6 @@
 import 'module-alias/register';
 import * as vscode from 'vscode';
+import * as TurndownService from 'turndown';
 
 import { uriHandler, CodingServer } from 'src/codingServer';
 import { Panel } from 'src/panel';
@@ -45,6 +46,7 @@ export async function activate(context: vscode.ExtensionContext) {
     showCollapseAll: true,
   });
 
+  const tdService = new TurndownService();
   const commentController = vscode.comments.createCommentController(
     'mr-comment',
     'Merge request diff comments',
@@ -236,11 +238,11 @@ export async function activate(context: vscode.ExtensionContext) {
             const lineNum = isLeft ? rootLine.leftNo : rootLine.rightNo;
             const range = new vscode.Range(lineNum, 0, lineNum, 0);
             const commentList: vscode.Comment[] = i.map((c) => {
-              const body = new vscode.MarkdownString(`${c.content}`);
+              const body = new vscode.MarkdownString(tdService.turndown(c.content));
               body.isTrusted = true;
               const comment: vscode.Comment = {
                 mode: vscode.CommentMode.Preview,
-                body: c.content,
+                body,
                 author: {
                   name: `${c.author.name}(${c.author.global_key})`,
                   iconPath: vscode.Uri.parse(c.author.avatar, false),
