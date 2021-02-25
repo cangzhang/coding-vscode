@@ -266,3 +266,79 @@ export interface IMRStatus {
 export interface IMRStatusResp extends CodingResponse {
   data: IMRStatus;
 }
+
+export interface IDiffLine {
+  index: number;
+  leftNo: number;
+  rightNo: number;
+  prefix: string;
+  text: string;
+}
+
+export interface IDiffFile {
+  linkRef: string;
+  linkUrl: string;
+  path: string;
+  changeType: string;
+  fileType: string;
+  type: string;
+  pathMD5: string;
+  changeMode: string;
+  oldMode: string;
+  newMode: string;
+  language: string;
+  insertions: number;
+  deletions: number;
+  isChangeInfoValid: boolean;
+  diffLines: IDiffLine[];
+}
+
+export interface IChildComment {
+  id: number;
+  noteable_type: string;
+  noteable_id: number;
+  content: string;
+  outdated: boolean;
+  author: IUserItem;
+  parentId: number;
+  created_at: number;
+  hasResourceReference: boolean;
+}
+
+export interface IDiffComment {
+  id: number;
+  commitId: string;
+  noteable_type: string;
+  noteable_id: number;
+  line: number;
+  change_type: number;
+  position: number;
+  path: string;
+  anchor: string;
+  content: string;
+  outdated: boolean;
+  parentId: number;
+  created_at: number;
+  hasResourceReference: boolean;
+  author: IUserItem;
+  diffFile: IDiffFile;
+}
+
+export interface IActivityComment {
+  id: number;
+  noteable_type: string;
+  noteable_id: number;
+  content: string;
+  outdated: boolean;
+  parentId: number;
+  created_at: number;
+  hasResourceReference: boolean;
+  author: IUserItem;
+  childComments: IChildComment[];
+}
+
+export type IMRComment = IDiffComment | IActivityComment;
+
+export interface IMRCommentResp extends CodingResponse {
+  data: IMRComment[][];
+}

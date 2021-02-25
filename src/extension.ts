@@ -7,6 +7,9 @@ import { IFileNode, MRTreeDataProvider } from 'src/tree/mrTree';
 import { ReleaseTreeDataProvider } from 'src/tree/releaseTree';
 import { IRepoInfo, IMRWebViewDetail, ISessionData } from 'src/typings/commonTypes';
 import { GitService } from 'src/common/gitService';
+import { ReviewComment, replyNote } from './reviewCommentController';
+import { MRUriScheme } from 'src/common/contants';
+import { IDiffComment, IMRData } from 'src/typings/respResult';
 
 export async function activate(context: vscode.ExtensionContext) {
   await GitService.init();
@@ -41,6 +44,23 @@ export async function activate(context: vscode.ExtensionContext) {
     treeDataProvider: releaseDataProvider,
     showCollapseAll: true,
   });
+
+  const commentController = vscode.comments.createCommentController(
+    'mr-comment',
+    'Merge request diff comments',
+  );
+  context.subscriptions.push(commentController);
+
+  commentController.commentingRangeProvider = {
+    provideCommentingRanges: (document: vscode.TextDocument, token: vscode.CancellationToken) => {
+      if (document.uri.scheme !== MRUriScheme) {
+        return;
+      }
+
+      const lineCount = document.lineCount;
+      return [new vscode.Range(0, 0, lineCount - 1, 0)];
+    },
+  };
 
   context.subscriptions.push(vscode.window.registerUriHandler(uriHandler));
   context.subscriptions.push(
@@ -184,21 +204,63 @@ export async function activate(context: vscode.ExtensionContext) {
     }),
   );
   context.subscriptions.push(
-    vscode.commands.registerCommand(`codingPlugin.showDiff`, async (file: IFileNode) => {
-      const headUri = vscode.Uri.parse(file.path, false).with({
-        // path: `${file.path}.txt`,
-        scheme: `mr`,
-        query: `commit=${file.newSha}&path=${file.path}`,
-      });
-      const parentUri = headUri.with({ query: `commit=${file.oldSha}&path=${file.path}` });
-      await vscode.commands.executeCommand(
-        `vscode.diff`,
-        parentUri,
-        headUri,
-        `${file.name} (Merge Request)`,
-        { preserveFocus: true },
-      );
-    }),
+    vscode.commands.registerCommand(
+      `codingPlugin.showDiff`,
+      async (file: IFileNode, mr: IMRData) => {
+        const headUri = vscode.Uri.parse(file.path, false).with({
+          scheme: MRUriScheme,
+          query: `commit=${file.newSha}&path=${file.path}`,
+        });
+        const parentUri = headUri.with({ query: `commit=${file.oldSha}&path=${file.path}` });
+        await vscode.commands.executeCommand(
+          `vscode.diff`,
+          parentUri,
+          headUri,
+          `${file.name} (Merge Request #${mr.iid})`,
+          { preserveFocus: true },
+        );
+
+        const commentResp = await codingSrv.getMRComments(mr.iid);
+        const comments = (commentResp.data as IDiffComment[][])
+          .filter((i) => {
+            const first = i[0];
+            return !first.outdated && first.path === file.path;
+          }, [])
+          .map((i) => {
+            const root = i[0];
+            const isRight = root.change_type === 1;
+            const isLeft = root.change_type === 2;
+            const both = root.change_type === 3;
+
+            const rootLine = root.diffFile.diffLines[root.diffFile.diffLines.length - 1];
+            const lineNum = isLeft ? rootLine.leftNo : rootLine.rightNo;
+            const range = new vscode.Range(lineNum, 0, lineNum, 0);
+            const commentList: vscode.Comment[] = i.map((c) => {
+              const body = new vscode.MarkdownString(`${c.content}`);
+              body.isTrusted = true;
+              const comment: vscode.Comment = {
+                mode: vscode.CommentMode.Preview,
+                body: c.content,
+                author: {
+                  name: `${c.author.name}(${c.author.global_key})`,
+                  iconPath: vscode.Uri.parse(c.author.avatar, false),
+                },
+              };
+              return comment;
+            });
+            commentController.createCommentThread(headUri, range, commentList);
+          });
+      },
+    ),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      `codingPlugin.diff.createComment`,
+      async (reply: vscode.CommentReply) => {
+        replyNote(reply);
+      },
+    ),
   );
 
   if (vscode.window.registerWebviewPanelSerializer) {

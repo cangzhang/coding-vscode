@@ -18,14 +18,16 @@ import {
   IMRContentResp,
   ICreateCommentResp,
   IMRStatusResp,
+  IMRCommentResp,
 } from 'src/typings/respResult';
+
 import { PromiseAdapter, promiseFromEvent, parseQuery, parseCloneUrl } from 'src/common/utils';
 import { GitService } from 'src/common/gitService';
 import { IRepoInfo, ISessionData, TokenType } from 'src/typings/commonTypes';
 import { keychain } from 'src/common/keychain';
 import Logger from 'src/common/logger';
 
-const AUTH_SERVER = `https://x5p7m.csb.app`;
+const AUTH_SERVER = `https://ftxwn9.coding-pages.com`;
 const ClientId = `ff768664c96d04235b1cc4af1e3b37a8`;
 const ClientSecret = `d29ebb32cab8b5f0a643b5da7dcad8d1469312c7`;
 
@@ -390,10 +392,10 @@ export class CodingServer {
     }
   }
 
-  public async getMRComments(iid: string) {
+  public async getMRComments(iid: string | number) {
     try {
       const { repoApiPrefix } = await this.getApiPrefix();
-      const result: CodingResponse = await got
+      const result: IMRCommentResp = await got
         .get(`${repoApiPrefix}/merge/${iid}/comments`, {
           searchParams: {
             access_token: this._session?.accessToken,

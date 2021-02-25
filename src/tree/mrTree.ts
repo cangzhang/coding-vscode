@@ -6,6 +6,7 @@ import { CodingServer } from 'src/codingServer';
 import { IRepoInfo, ISessionData, GitChangeType } from 'src/typings/commonTypes';
 import { IMRDiffStat, IMRData, IMRPathItem } from 'src/typings/respResult';
 import { getInMemMRContentProvider } from './inMemMRContentProvider';
+import { MRUriScheme } from 'src/common/contants';
 
 enum MRType {
   Open = `open`,
@@ -69,7 +70,7 @@ export class MRTreeDataProvider implements vscode.TreeDataProvider<ListItem<ITre
     this._disposables = [];
     this._disposables.push(
       vscode.workspace.registerTextDocumentContentProvider(
-        'mr',
+        MRUriScheme,
         getInMemMRContentProvider(context, this._service),
       ),
     );
@@ -233,6 +234,7 @@ export class MRItem extends ListItem<IMRData> {
             (f.children || [])?.length > 0
               ? TreeItemCollapsibleState.Expanded
               : TreeItemCollapsibleState.None,
+            this.value,
           ),
       ),
     ];
@@ -297,6 +299,7 @@ export class FileNode extends ListItem<IFileNode> {
     public readonly label: string,
     public readonly value: IFileNode,
     public readonly collapsibleState: TreeItemCollapsibleState,
+    public readonly mrData: IMRData,
   ) {
     super(
       label,
@@ -306,7 +309,7 @@ export class FileNode extends ListItem<IFileNode> {
         ? {
             command: `codingPlugin.showDiff`,
             title: ``,
-            arguments: [value],
+            arguments: [value, mrData],
           }
         : undefined,
       FileNode.getFileIcon(value.changeType, collapsibleState),
@@ -333,6 +336,7 @@ export class FileNode extends ListItem<IFileNode> {
           (f.children || [])?.length > 0
             ? TreeItemCollapsibleState.Expanded
             : TreeItemCollapsibleState.None,
+          this.mrData,
         ),
     );
   }
