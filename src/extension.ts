@@ -222,36 +222,45 @@ export async function activate(context: vscode.ExtensionContext) {
           { preserveFocus: true },
         );
 
-        const commentResp = await codingSrv.getMRComments(mr.iid);
-        const comments = (commentResp.data as IDiffComment[][])
-          .filter((i) => {
-            const first = i[0];
-            return !first.outdated && first.path === file.path;
-          }, [])
-          .map((i) => {
-            const root = i[0];
-            const isRight = root.change_type === 1;
-            const isLeft = root.change_type === 2;
-            const both = root.change_type === 3;
+        try {
+          const commentResp = await codingSrv.getMRComments(mr.iid);
+          (commentResp.data as IDiffComment[][])
+            .filter((i) => {
+              const first = i[0];
+              return !first.outdated && first.path === file.path;
+            }, [])
+            .forEach((i) => {
+              const root = i[0];
+              const isRight = root.change_type === 1;
+              const isLeft = root.change_type === 2;
+              const both = root.change_type === 3;
 
-            const rootLine = root.diffFile.diffLines[root.diffFile.diffLines.length - 1];
-            const lineNum = isLeft ? rootLine.leftNo : rootLine.rightNo;
-            const range = new vscode.Range(lineNum, 0, lineNum, 0);
-            const commentList: vscode.Comment[] = i.map((c) => {
-              const body = new vscode.MarkdownString(tdService.turndown(c.content));
-              body.isTrusted = true;
-              const comment: vscode.Comment = {
-                mode: vscode.CommentMode.Preview,
-                body,
-                author: {
-                  name: `${c.author.name}(${c.author.global_key})`,
-                  iconPath: vscode.Uri.parse(c.author.avatar, false),
-                },
-              };
-              return comment;
+              const rootLine = root.diffFile.diffLines[root.diffFile.diffLines.length - 1];
+              const lineNum = isLeft ? rootLine.leftNo : rootLine.rightNo;
+              const range = new vscode.Range(lineNum - 1, 0, lineNum - 1, 0);
+
+              const commentList: vscode.Comment[] = i.map((c) => {
+                const body = new vscode.MarkdownString(tdService.turndown(c.content));
+                body.isTrusted = true;
+                const comment: vscode.Comment = {
+                  mode: vscode.CommentMode.Preview,
+                  body,
+                  author: {
+                    name: `${c.author.name}(${c.author.global_key})`,
+                    iconPath: vscode.Uri.parse(c.author.avatar, false),
+                  },
+                };
+                return comment;
+              });
+              const commentThread = commentController.createCommentThread(
+                headUri,
+                range,
+                commentList,
+              );
+              commentThread.collapsibleState = vscode.CommentThreadCollapsibleState.Expanded;
             });
-            commentController.createCommentThread(headUri, range, commentList);
-          });
+        } finally {
+        }
       },
     ),
   );
