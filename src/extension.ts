@@ -231,12 +231,11 @@ export async function activate(context: vscode.ExtensionContext) {
             }, [])
             .forEach((i) => {
               const root = i[0];
-              const isRight = root.change_type === 1;
               const isLeft = root.change_type === 2;
-              const both = root.change_type === 3;
+              const isRight = root.change_type === 1;
 
               const rootLine = root.diffFile.diffLines[root.diffFile.diffLines.length - 1];
-              const lineNum = isLeft ? rootLine.leftNo : rootLine.rightNo;
+              const lineNum = isLeft ? rootLine.leftNo - 1 : rootLine.rightNo - 1;
               const range = new vscode.Range(lineNum - 1, 0, lineNum - 1, 0);
 
               const commentList: vscode.Comment[] = i.map((c) => {
@@ -253,7 +252,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 return comment;
               });
               const commentThread = commentController.createCommentThread(
-                headUri,
+                isRight ? headUri : parentUri,
                 range,
                 commentList,
               );
