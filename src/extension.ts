@@ -48,7 +48,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const tdService = new TurndownService();
   const commentController = vscode.comments.createCommentController(
-    'mr-comment',
+    'mrDiffComment',
     'Merge request diff comments',
   );
   context.subscriptions.push(commentController);
@@ -267,7 +267,15 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand(
       `codingPlugin.diff.createComment`,
-      async (reply: vscode.CommentReply) => {
+      (reply: vscode.CommentReply) => {
+        replyNote(reply);
+      },
+    ),
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      `codingPlugin.diff.replyComment`,
+      (reply: vscode.CommentReply) => {
         replyNote(reply);
       },
     ),

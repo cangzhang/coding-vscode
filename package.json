@@ -60,9 +60,29 @@
         "command": "codingPlugin.switchRepo",
         "title": "Switch repo",
         "category": "Coding plugin"
+      },
+      {
+        "command": "codingPlugin.diff.createComment",
+        "title": "Post comment",
+        "enablement": "!commentIsEmpty"
+      },
+      {
+        "command": "codingPlugin.diff.replyComment",
+        "title": "Reply",
+        "enablement": "!commentIsEmpty"
       }
     ],
     "menus": {
+      "commandPalette": [
+        {
+          "command": "codingPlugin.diff.createComment",
+          "when": "false"
+        },
+        {
+          "command": "codingPlugin.diff.replyComment",
+          "when": "false"
+        }
+      ],
       "view/title": [
         {
           "command": "codingPlugin.newMrDesc",
@@ -73,6 +93,18 @@
           "command": "codingPlugin.refresh",
           "when": "view == mrTreeView",
           "group": "navigation"
+        }
+      ],
+      "comments/commentThread/context": [
+        {
+          "command": "codingPlugin.diff.createComment",
+          "group": "inline",
+          "when": "commentController == mrDiffComment && commentThreadIsEmpty"
+        },
+        {
+          "command": "codingPlugin.diff.replyComment",
+          "group": "inline",
+          "when": "commentController == mrDiffComment && !commentThreadIsEmpty"
         }
       ]
     },
