@@ -30,7 +30,7 @@ export class InMemMRContentProvider implements vscode.TextDocumentContentProvide
     token: vscode.CancellationToken,
   ): Promise<string> {
     const params = new URLSearchParams(decodeURIComponent(uri.query));
-    const commit = params.get(`commit`);
+    const commit = params.get(`right`) ? params.get(`rightSha`) : params.get('leftSha');
     const path = params.get(`path`);
     return await this._service.getRemoteFileContent(`${commit}/${path}`);
   }

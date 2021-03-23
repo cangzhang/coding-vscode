@@ -342,3 +342,14 @@ export type IMRComment = IDiffComment | IActivityComment;
 export interface IMRCommentResp extends CodingResponse {
   data: IMRComment[][];
 }
+
+export interface IFileDiffParam {
+  path: string;
+  base: string;
+  compare: string;
+  mergeRequestId: string;
+}
+
+export interface IFileDiffResp extends CodingResponse {
+  data: IDiffFile;
+}

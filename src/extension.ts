@@ -10,7 +10,8 @@ import { IRepoInfo, IMRWebViewDetail, ISessionData } from 'src/typings/commonTyp
 import { GitService } from 'src/common/gitService';
 import { ReviewComment, replyNote } from './reviewCommentController';
 import { MRUriScheme } from 'src/common/contants';
-import { IDiffComment, IMRData } from 'src/typings/respResult';
+import { IDiffComment, IMRData, IFileDiffParam } from 'src/typings/respResult';
+import { getDiffLineNumber, isHunkLine } from 'src/common/utils';
 
 export async function activate(context: vscode.ExtensionContext) {
   await GitService.init();
@@ -54,13 +55,42 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(commentController);
 
   commentController.commentingRangeProvider = {
-    provideCommentingRanges: (document: vscode.TextDocument, token: vscode.CancellationToken) => {
+    provideCommentingRanges: async (
+      document: vscode.TextDocument,
+      token: vscode.CancellationToken,
+    ) => {
       if (document.uri.scheme !== MRUriScheme) {
-        return;
+        return [];
       }
 
-      const lineCount = document.lineCount;
-      return [new vscode.Range(0, 0, lineCount - 1, 0)];
+      try {
+        const params = new URLSearchParams(decodeURIComponent(document.uri.query));
+        const iid = params.get('mr') || ``;
+        let param: IFileDiffParam = {
+          path: params.get('path') ?? ``,
+          base: params.get('leftSha') ?? ``,
+          compare: params.get('rightSha') ?? ``,
+          mergeRequestId: iid ?? ``,
+        };
+        const {
+          data: { diffLines },
+        } = await codingSrv.fetchFileDiffs(param);
+        const ret = diffLines.reduce((result, i) => {
+          const isHunk = isHunkLine(i.text);
+          if (!isHunk) {
+            return result;
+          }
+
+          const [left, right] = getDiffLineNumber(i.text);
+          const [start, end] = params.get('right') ? right : left;
+          result.push(new vscode.Range(start, 0, end, 0));
+          return result;
+        }, [] as vscode.Range[]);
+        return ret;
+      } catch (e) {
+        console.error('fetch diff lines failed.');
+        return [];
+      }
     },
   };
 
@@ -211,9 +241,11 @@ export async function activate(context: vscode.ExtensionContext) {
       async (file: IFileNode, mr: IMRData) => {
         const headUri = vscode.Uri.parse(file.path, false).with({
           scheme: MRUriScheme,
-          query: `commit=${file.newSha}&path=${file.path}`,
+          query: `leftSha=${file.oldSha}&rightSha=${file.newSha}&path=${file.path}&right=true&mr=${mr.iid}`,
         });
-        const parentUri = headUri.with({ query: `commit=${file.oldSha}&path=${file.path}` });
+        const parentUri = headUri.with({
+          query: `leftSha=${file.oldSha}&rightSha=${file.newSha}&path=${file.path}&right=false&mr=${mr.iid}`,
+        });
         await vscode.commands.executeCommand(
           `vscode.diff`,
           parentUri,
@@ -224,6 +256,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
         try {
           const commentResp = await codingSrv.getMRComments(mr.iid);
+
           (commentResp.data as IDiffComment[][])
             .filter((i) => {
               const first = i[0];
@@ -268,7 +301,7 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(
       `codingPlugin.diff.createComment`,
       (reply: vscode.CommentReply) => {
-        replyNote(reply);
+        replyNote(reply, context);
       },
     ),
   );
@@ -276,7 +309,7 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(
       `codingPlugin.diff.replyComment`,
       (reply: vscode.CommentReply) => {
-        replyNote(reply);
+        replyNote(reply, context);
       },
     ),
   );

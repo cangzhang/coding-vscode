@@ -19,6 +19,8 @@ import {
   ICreateCommentResp,
   IMRStatusResp,
   IMRCommentResp,
+  IFileDiffParam,
+  IFileDiffResp,
 } from 'src/typings/respResult';
 
 import { PromiseAdapter, promiseFromEvent, parseQuery, parseCloneUrl } from 'src/common/utils';
@@ -703,6 +705,32 @@ export class CodingServer {
         .get(`${repoApiPrefix}/merge/${iid}/commit-statuses`, {
           searchParams: {
             access_token: this._session?.accessToken,
+          },
+        })
+        .json();
+
+      if (resp.code) {
+        return Promise.reject(resp);
+      }
+
+      return resp;
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+
+  public async fetchFileDiffs(param: IFileDiffParam) {
+    try {
+      const { repoApiPrefix } = await this.getApiPrefix();
+      const resp: IFileDiffResp = await got
+        .get(`http://127.0.0.1:5000/api/git/compare_with_path`, {
+          // .get(`${repoApiPrefix}/compare_with_path`, {
+          searchParams: {
+            access_token: this._session?.accessToken,
+            base: param.base,
+            compare: param.compare,
+            path: encodeURIComponent(param.path),
+            mergeRequestId: param.mergeRequestId,
           },
         })
         .json();
