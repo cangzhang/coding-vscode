@@ -723,8 +723,8 @@ export class CodingServer {
     try {
       const { repoApiPrefix } = await this.getApiPrefix();
       const resp: IFileDiffResp = await got
-        .get(`http://127.0.0.1:5000/api/git/compare_with_path`, {
-          // .get(`${repoApiPrefix}/compare_with_path`, {
+        // .get(`http://127.0.0.1:5000/api/git/compare_with_path`, {
+        .get(`${repoApiPrefix}/compare_with_path`, {
           searchParams: {
             access_token: this._session?.accessToken,
             base: param.base,

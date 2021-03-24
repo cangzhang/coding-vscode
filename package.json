@@ -70,6 +70,11 @@
         "command": "codingPlugin.diff.replyComment",
         "title": "Reply",
         "enablement": "!commentIsEmpty"
+      },
+      {
+        "command": "extension.diff.deleteComment",
+        "title": "Delete comment",
+        "#enablement": "!commentIsEmpty"
       }
     ],
     "menus": {
@@ -105,6 +110,12 @@
           "command": "codingPlugin.diff.replyComment",
           "group": "inline",
           "when": "commentController == mrDiffComment && !commentThreadIsEmpty"
+        }
+      ],
+      "comments/comment/title": [
+        {
+          "command": "extension.diff.deleteComment",
+          "when": "comment == editable"
         }
       ]
     },

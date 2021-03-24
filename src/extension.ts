@@ -8,9 +8,9 @@ import { IFileNode, MRTreeDataProvider } from 'src/tree/mrTree';
 import { ReleaseTreeDataProvider } from 'src/tree/releaseTree';
 import { IRepoInfo, IMRWebViewDetail, ISessionData } from 'src/typings/commonTypes';
 import { GitService } from 'src/common/gitService';
-import { ReviewComment, replyNote } from './reviewCommentController';
 import { MRUriScheme } from 'src/common/contants';
 import { IDiffComment, IMRData, IFileDiffParam } from 'src/typings/respResult';
+import { replyNote } from './reviewCommentController';
 import { getDiffLineNumber, isHunkLine } from 'src/common/utils';
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -82,7 +82,7 @@ export async function activate(context: vscode.ExtensionContext) {
           }
 
           const [left, right] = getDiffLineNumber(i.text);
-          const [start, end] = params.get('right') ? right : left;
+          const [start, end] = params.get('right') === `true` ? right : left;
           result.push(new vscode.Range(start, 0, end, 0));
           return result;
         }, [] as vscode.Range[]);
