@@ -53,6 +53,7 @@ export async function activate(context: vscode.ExtensionContext) {
     'Merge request diff comments',
   );
   context.subscriptions.push(commentController);
+  const commentResolveData: { [key: string]: boolean } = {};
 
   commentController.commentingRangeProvider = {
     provideCommentingRanges: async (
@@ -65,12 +66,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
       try {
         const params = new URLSearchParams(decodeURIComponent(document.uri.query));
-        const iid = params.get('mr') || ``;
+        const mrId = params.get('id') || ``;
         let param: IFileDiffParam = {
           path: params.get('path') ?? ``,
           base: params.get('leftSha') ?? ``,
           compare: params.get('rightSha') ?? ``,
-          mergeRequestId: iid ?? ``,
+          mergeRequestId: mrId ?? ``,
         };
         const {
           data: { diffLines },
@@ -83,7 +84,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
           const [left, right] = getDiffLineNumber(i.text);
           const [start, end] = params.get('right') === `true` ? right : left;
-          result.push(new vscode.Range(start, 0, end, 0));
+          if (start > 0) {
+            result.push(new vscode.Range(start - 1, 0, end, 0));
+          }
           return result;
         }, [] as vscode.Range[]);
         return ret;
@@ -241,10 +244,10 @@ export async function activate(context: vscode.ExtensionContext) {
       async (file: IFileNode, mr: IMRData) => {
         const headUri = vscode.Uri.parse(file.path, false).with({
           scheme: MRUriScheme,
-          query: `leftSha=${file.oldSha}&rightSha=${file.newSha}&path=${file.path}&right=true&mr=${mr.iid}`,
+          query: `leftSha=${file.oldSha}&rightSha=${file.newSha}&path=${file.path}&right=true&mr=${mr.iid}&id=${mr.id}`,
         });
         const parentUri = headUri.with({
-          query: `leftSha=${file.oldSha}&rightSha=${file.newSha}&path=${file.path}&right=false&mr=${mr.iid}`,
+          query: `leftSha=${file.oldSha}&rightSha=${file.newSha}&path=${file.path}&right=false&mr=${mr.iid}&id=${mr.id}`,
         });
         await vscode.commands.executeCommand(
           `vscode.diff`,
@@ -254,43 +257,49 @@ export async function activate(context: vscode.ExtensionContext) {
           { preserveFocus: true },
         );
 
+        const identifier = `${mr.iid}/${file.path}`;
+        if (commentResolveData[identifier]) {
+          return;
+        }
+
         try {
           const commentResp = await codingSrv.getMRComments(mr.iid);
 
-          (commentResp.data as IDiffComment[][])
-            .filter((i) => {
-              const first = i[0];
-              return !first.outdated && first.path === file.path;
-            }, [])
-            .forEach((i) => {
-              const root = i[0];
-              const isLeft = root.change_type === 2;
-              const isRight = root.change_type === 1;
+          const validComments = (commentResp.data as IDiffComment[][]).filter((i) => {
+            const first = i[0];
+            return !first.outdated && first.path === file.path;
+          }, []);
 
-              const rootLine = root.diffFile.diffLines[root.diffFile.diffLines.length - 1];
-              const lineNum = isLeft ? rootLine.leftNo - 1 : rootLine.rightNo - 1;
-              const range = new vscode.Range(lineNum - 1, 0, lineNum - 1, 0);
+          validComments.forEach((i) => {
+            const root = i[0];
+            const isLeft = root.change_type === 2;
+            const isRight = root.change_type === 1;
 
-              const commentList: vscode.Comment[] = i.map((c) => {
-                const body = new vscode.MarkdownString(tdService.turndown(c.content));
-                body.isTrusted = true;
-                const comment: vscode.Comment = {
-                  mode: vscode.CommentMode.Preview,
-                  body,
-                  author: {
-                    name: `${c.author.name}(${c.author.global_key})`,
-                    iconPath: vscode.Uri.parse(c.author.avatar, false),
-                  },
-                };
-                return comment;
-              });
-              const commentThread = commentController.createCommentThread(
-                isRight ? headUri : parentUri,
-                range,
-                commentList,
-              );
-              commentThread.collapsibleState = vscode.CommentThreadCollapsibleState.Expanded;
+            const rootLine = root.diffFile.diffLines[root.diffFile.diffLines.length - 1];
+            const lineNum = isLeft ? rootLine.leftNo - 1 : rootLine.rightNo - 1;
+            const range = new vscode.Range(lineNum - 1, 0, lineNum - 1, 0);
+
+            const commentList: vscode.Comment[] = i.map((c) => {
+              const body = new vscode.MarkdownString(tdService.turndown(c.content));
+              body.isTrusted = true;
+              const comment: vscode.Comment = {
+                mode: vscode.CommentMode.Preview,
+                body,
+                author: {
+                  name: `${c.author.name}(${c.author.global_key})`,
+                  iconPath: vscode.Uri.parse(c.author.avatar, false),
+                },
+              };
+              return comment;
             });
+            const commentThread = commentController.createCommentThread(
+              isRight ? headUri : parentUri,
+              range,
+              commentList,
+            );
+            commentThread.collapsibleState = vscode.CommentThreadCollapsibleState.Expanded;
+          });
+          commentResolveData[identifier] = true;
         } finally {
         }
       },
@@ -300,7 +309,7 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand(
       `codingPlugin.diff.createComment`,
-      (reply: vscode.CommentReply) => {
+      async (reply: vscode.CommentReply) => {
         replyNote(reply, context);
       },
     ),
@@ -308,8 +317,15 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand(
       `codingPlugin.diff.replyComment`,
-      (reply: vscode.CommentReply) => {
+      async (reply: vscode.CommentReply) => {
         replyNote(reply, context);
+        const params = new URLSearchParams(decodeURIComponent(reply.thread.uri.query));
+        const isRight = params.get('right') === `true`;
+        const noteable_id = params.get('id'); // mr index id
+        const commitId = isRight ? params.get('rightSha') : params.get('leftSha');
+        const content = encodeURIComponent(reply.text);
+        const noteable_type = `MergeRequestBean`;
+        const change_type = isRight ? 1 : 2;
       },
     ),
   );

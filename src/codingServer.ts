@@ -29,7 +29,7 @@ import { IRepoInfo, ISessionData, TokenType } from 'src/typings/commonTypes';
 import { keychain } from 'src/common/keychain';
 import Logger from 'src/common/logger';
 
-const AUTH_SERVER = `https://ftxwn9.coding-pages.com`;
+const AUTH_SERVER = `https://x5p7m.csb.app/`;
 const ClientId = `ff768664c96d04235b1cc4af1e3b37a8`;
 const ClientSecret = `d29ebb32cab8b5f0a643b5da7dcad8d1469312c7`;
 
@@ -723,7 +723,6 @@ export class CodingServer {
     try {
       const { repoApiPrefix } = await this.getApiPrefix();
       const resp: IFileDiffResp = await got
-        // .get(`http://127.0.0.1:5000/api/git/compare_with_path`, {
         .get(`${repoApiPrefix}/compare_with_path`, {
           searchParams: {
             access_token: this._session?.accessToken,

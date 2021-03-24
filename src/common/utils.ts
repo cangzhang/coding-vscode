@@ -71,9 +71,9 @@ const HunkRegExp = /@@.+@@/g;
 export const isHunkLine = (hunk: string) => HunkRegExp.test(hunk);
 
 export const getDiffLineNumber = (hunk: string) => {
-  const matchedHunks = hunk.match(/[-+]\d+,\d+/g) || [];
+  const matchedHunks = hunk.match(/[-+]\d+(,\d+)?/g) || [];
   return matchedHunks.map((i) => {
-    const [start, sum] = i.match(/\d+/g)?.map((j) => +j) || [0, 0];
+    const [start = 0, sum = 0] = i.match(/\d+/g)?.map((j) => +j) ?? [];
     const end = start + sum > 0 ? start + sum - 1 : 0;
     return [start, end];
   });

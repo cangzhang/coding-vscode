@@ -31,7 +31,6 @@ export function replyNote(reply: vscode.CommentReply, context: vscode.ExtensionC
       };
   const thread = reply.thread;
   thread.contextValue = `editable`;
-  const params = new URLSearchParams(decodeURIComponent(thread.uri.query));
   const newComment = new ReviewComment(
     reply.text,
     vscode.CommentMode.Preview,
