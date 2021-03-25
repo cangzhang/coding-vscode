@@ -9,8 +9,14 @@ import { ReleaseTreeDataProvider } from 'src/tree/releaseTree';
 import { IRepoInfo, IMRWebViewDetail, ISessionData } from 'src/typings/commonTypes';
 import { GitService } from 'src/common/gitService';
 import { MRUriScheme } from 'src/common/contants';
-import { IDiffComment, IMRData, IFileDiffParam } from 'src/typings/respResult';
-import { replyNote } from './reviewCommentController';
+import {
+  IDiffComment,
+  IMRData,
+  IFileDiffParam,
+  IFileDiffResp,
+  IDiffFile,
+} from 'src/typings/respResult';
+import { replyNote, ReviewComment } from './reviewCommentController';
 import { getDiffLineNumber, isHunkLine } from 'src/common/utils';
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -53,7 +59,9 @@ export async function activate(context: vscode.ExtensionContext) {
     'Merge request diff comments',
   );
   context.subscriptions.push(commentController);
+
   const commentResolveData: { [key: string]: boolean } = {};
+  const diffFileData: { [key: string]: IDiffFile } = {};
 
   commentController.commentingRangeProvider = {
     provideCommentingRanges: async (
@@ -73,9 +81,12 @@ export async function activate(context: vscode.ExtensionContext) {
           compare: params.get('rightSha') ?? ``,
           mergeRequestId: mrId ?? ``,
         };
-        const {
-          data: { diffLines },
-        } = await codingSrv.fetchFileDiffs(param);
+        const fileIdent = `${params.get(`mr`)}/${params.get(`path`)}`;
+
+        const { data } = await codingSrv.fetchFileDiffs(param);
+        diffFileData[fileIdent] = data;
+        const { diffLines } = data;
+
         const ret = diffLines.reduce((result, i) => {
           const isHunk = isHunkLine(i.text);
           if (!isHunk) {
@@ -277,19 +288,23 @@ export async function activate(context: vscode.ExtensionContext) {
 
             const rootLine = root.diffFile.diffLines[root.diffFile.diffLines.length - 1];
             const lineNum = isLeft ? rootLine.leftNo - 1 : rootLine.rightNo - 1;
-            const range = new vscode.Range(lineNum - 1, 0, lineNum - 1, 0);
+            const range = new vscode.Range(lineNum, 0, lineNum, 0);
 
             const commentList: vscode.Comment[] = i.map((c) => {
               const body = new vscode.MarkdownString(tdService.turndown(c.content));
               body.isTrusted = true;
-              const comment: vscode.Comment = {
-                mode: vscode.CommentMode.Preview,
+              const comment = new ReviewComment(
                 body,
-                author: {
+                vscode.CommentMode.Preview,
+                {
                   name: `${c.author.name}(${c.author.global_key})`,
                   iconPath: vscode.Uri.parse(c.author.avatar, false),
                 },
-              };
+                undefined,
+                'canDelete',
+                c.id,
+              );
+
               return comment;
             });
             const commentThread = commentController.createCommentThread(
@@ -318,14 +333,37 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(
       `codingPlugin.diff.replyComment`,
       async (reply: vscode.CommentReply) => {
-        replyNote(reply, context);
         const params = new URLSearchParams(decodeURIComponent(reply.thread.uri.query));
         const isRight = params.get('right') === `true`;
-        const noteable_id = params.get('id'); // mr index id
+        const ident = `${params.get(`mr`)}/${params.get(`path`)}`;
+        const diffFile = diffFileData[ident];
+
+        const noteable_id = params.get('id') ?? ``; // mr index id
         const commitId = isRight ? params.get('rightSha') : params.get('leftSha');
-        const content = encodeURIComponent(reply.text);
+        const content = reply.text;
         const noteable_type = `MergeRequestBean`;
         const change_type = isRight ? 1 : 2;
+        const line = reply.thread.range.start.line + 1;
+        const path = encodeURIComponent(params.get(`path`) || ``);
+        const targetPos = diffFile.diffLines.find((i) => {
+          return i[isRight ? `rightNo` : `leftNo`] === line;
+        });
+        const position = targetPos?.index ?? 0;
+
+        try {
+          const resp = await codingSrv.postLineNote({
+            noteable_id,
+            commitId: commitId ?? ``,
+            content,
+            noteable_type,
+            change_type,
+            line,
+            path,
+            position,
+          });
+
+          replyNote(reply, context);
+        } catch (e) {}
       },
     ),
   );

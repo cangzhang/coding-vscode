@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { ISessionData } from 'src/typings/commonTypes';
 import { EmptyUserAvatar } from 'src/common/contants';
 
-let commentId = 1;
+let commentIdx = 1;
 
 export class ReviewComment implements vscode.Comment {
   id: number;
@@ -13,8 +13,9 @@ export class ReviewComment implements vscode.Comment {
     public author: vscode.CommentAuthorInformation,
     public parent?: vscode.CommentThread,
     public contextValue?: string,
+    public commentId?: number,
   ) {
-    this.id = ++commentId;
+    this.id = commentId ?? ++commentIdx;
   }
 }
 
