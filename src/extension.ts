@@ -291,23 +291,25 @@ export async function activate(context: vscode.ExtensionContext) {
             const lineNum = isLeft ? rootLine.leftNo - 1 : rootLine.rightNo - 1;
             const range = new vscode.Range(lineNum, 0, lineNum, 0);
 
-            const commentList: vscode.Comment[] = i.map((c) => {
-              const body = new vscode.MarkdownString(tdService.turndown(c.content));
-              body.isTrusted = true;
-              const comment = new ReviewComment(
-                body,
-                vscode.CommentMode.Preview,
-                {
-                  name: `${c.author.name}(${c.author.global_key})`,
-                  iconPath: vscode.Uri.parse(c.author.avatar, false),
-                },
-                undefined,
-                'canDelete',
-                c.id,
-              );
+            const commentList: vscode.Comment[] = i
+              .sort((a, b) => a.created_at - b.created_at)
+              .map((c) => {
+                const body = new vscode.MarkdownString(tdService.turndown(c.content));
+                body.isTrusted = true;
+                const comment = new ReviewComment(
+                  body,
+                  vscode.CommentMode.Preview,
+                  {
+                    name: `${c.author.name}(${c.author.global_key})`,
+                    iconPath: vscode.Uri.parse(c.author.avatar, false),
+                  },
+                  undefined,
+                  'canDelete',
+                  c.id,
+                );
 
-              return comment;
-            });
+                return comment;
+              });
 
             const commentThread = commentController.createCommentThread(
               isRight ? headUri : parentUri,
