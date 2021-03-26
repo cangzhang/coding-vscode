@@ -6,11 +6,17 @@ import { uriHandler, CodingServer } from 'src/codingServer';
 import { Panel } from 'src/panel';
 import { IFileNode, MRTreeDataProvider } from 'src/tree/mrTree';
 import { ReleaseTreeDataProvider } from 'src/tree/releaseTree';
-import { IRepoInfo, IMRWebViewDetail, ISessionData } from 'src/typings/commonTypes';
+import {
+  IRepoInfo,
+  IMRWebViewDetail,
+  ISessionData,
+  ICachedCommentThreads,
+  ICachedCommentController,
+} from 'src/typings/commonTypes';
 import { GitService } from 'src/common/gitService';
 import { MRUriScheme } from 'src/common/contants';
 import { IDiffComment, IMRData, IFileDiffParam, IDiffFile } from 'src/typings/respResult';
-import { replyNote, ReviewComment } from './reviewCommentController';
+import { replyNote, ReviewComment, makeCommentRangeProvider } from 'src/reviewCommentController';
 import { getDiffLineNumber, isHunkLine } from 'src/common/utils';
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -48,59 +54,10 @@ export async function activate(context: vscode.ExtensionContext) {
   });
 
   const tdService = new TurndownService();
-  const commentController = vscode.comments.createCommentController(
-    'mrDiffComment',
-    'Merge request diff comments',
-  );
-  context.subscriptions.push(commentController);
-
-  const commentThreads: { [key: string]: vscode.CommentThread[] } = {};
   const diffFileData: { [key: string]: IDiffFile } = {};
-
-  commentController.commentingRangeProvider = {
-    provideCommentingRanges: async (
-      document: vscode.TextDocument,
-      token: vscode.CancellationToken,
-    ) => {
-      if (document.uri.scheme !== MRUriScheme) {
-        return [];
-      }
-
-      try {
-        const params = new URLSearchParams(decodeURIComponent(document.uri.query));
-        const mrId = params.get('id') || ``;
-        let param: IFileDiffParam = {
-          path: params.get('path') ?? ``,
-          base: params.get('leftSha') ?? ``,
-          compare: params.get('rightSha') ?? ``,
-          mergeRequestId: mrId ?? ``,
-        };
-        const fileIdent = `${params.get(`mr`)}/${params.get(`path`)}`;
-
-        const { data } = await codingSrv.fetchFileDiffs(param);
-        diffFileData[fileIdent] = data;
-        const { diffLines } = data;
-
-        const ret = diffLines.reduce((result, i) => {
-          const isHunk = isHunkLine(i.text);
-          if (!isHunk) {
-            return result;
-          }
-
-          const [left, right] = getDiffLineNumber(i.text);
-          const [start, end] = params.get('right') === `true` ? right : left;
-          if (start > 0) {
-            result.push(new vscode.Range(start - 1, 0, end, 0));
-          }
-          return result;
-        }, [] as vscode.Range[]);
-        return ret;
-      } catch (e) {
-        console.error('fetch diff lines failed.');
-        return [];
-      }
-    },
-  };
+  const cachedCommentThreads: ICachedCommentThreads = {};
+  const cachedCommentControllers: ICachedCommentController = {};
+  let selectedMrFile = ``;
 
   context.subscriptions.push(vscode.window.registerUriHandler(uriHandler));
   context.subscriptions.push(
@@ -247,6 +204,12 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(
       `codingPlugin.showDiff`,
       async (file: IFileNode, mr: IMRData) => {
+        const curMrFile = `${mr.iid}/${file.path}`;
+        if (selectedMrFile === curMrFile) {
+          return;
+        }
+        selectedMrFile = curMrFile;
+
         const headUri = vscode.Uri.parse(file.path, false).with({
           scheme: MRUriScheme,
           query: `leftSha=${file.oldSha}&rightSha=${file.newSha}&path=${file.path}&right=true&mr=${mr.iid}&id=${mr.id}`,
@@ -262,9 +225,24 @@ export async function activate(context: vscode.ExtensionContext) {
           { preserveFocus: true },
         );
 
-        commentThreads[mr.iid]?.forEach((c) => {
+        const cacheId = `${mr.iid}/${file.path}`;
+        // cachedCommentControllers[cacheId]?.dispose();
+        cachedCommentThreads[cacheId]?.forEach((c) => {
           c?.dispose();
         });
+        cachedCommentThreads[cacheId] = [];
+
+        let commentController = cachedCommentControllers[cacheId];
+        if (!commentController) {
+          commentController = vscode.comments.createCommentController(
+            `mr-${mr.iid}`,
+            `mr-${mr.iid}-comment-controller`,
+          );
+          commentController.commentingRangeProvider = {
+            provideCommentingRanges: makeCommentRangeProvider(codingSrv, diffFileData),
+          };
+          cachedCommentControllers[cacheId] = commentController;
+        }
 
         try {
           const commentResp = await codingSrv.getMRComments(mr.iid);
@@ -284,11 +262,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
           Object.values(validComments).forEach((i) => {
             const root = i[0];
-            const isLeft = root.change_type === 2;
             const isRight = root.change_type === 1;
 
             const rootLine = root.diffFile.diffLines[root.diffFile.diffLines.length - 1];
-            const lineNum = isLeft ? rootLine.leftNo - 1 : rootLine.rightNo - 1;
+            const lineNum = isRight ? rootLine.rightNo - 1 : rootLine.leftNo - 1;
             const range = new vscode.Range(lineNum, 0, lineNum, 0);
 
             const commentList: vscode.Comment[] = i
@@ -319,7 +296,9 @@ export async function activate(context: vscode.ExtensionContext) {
             commentThread.comments = commentList;
             commentThread.collapsibleState = vscode.CommentThreadCollapsibleState.Expanded;
 
-            commentThreads[mr.iid] = (commentThreads[mr.iid] ?? []).concat(commentThread);
+            cachedCommentThreads[cacheId] = (cachedCommentThreads[mr.iid] ?? []).concat(
+              commentThread,
+            );
           });
         } finally {
         }
@@ -331,7 +310,8 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(
       `codingPlugin.diff.createComment`,
       async (reply: vscode.CommentReply) => {
-        replyNote(reply, context, codingSrv, diffFileData);
+        const cachedThreadId = await replyNote(reply, context, codingSrv, diffFileData);
+        cachedCommentThreads[cachedThreadId].push(reply.thread);
       },
     ),
   );
@@ -339,7 +319,8 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(
       `codingPlugin.diff.replyComment`,
       async (reply: vscode.CommentReply) => {
-        replyNote(reply, context, codingSrv, diffFileData);
+        const cachedThreadId = await replyNote(reply, context, codingSrv, diffFileData);
+        cachedCommentThreads[cachedThreadId].push(reply.thread);
       },
     ),
   );

@@ -1,3 +1,4 @@
+import * as vscode from 'vscode';
 import { IDiffFile, IMRDetail, IMRStatusItem, IUserItem } from './respResult';
 
 export interface IRepoInfo {
@@ -44,4 +45,12 @@ export interface IMRWebViewDetail {
 
 export interface IDiffFileData {
   [key: string]: IDiffFile;
+}
+
+export interface ICachedCommentThreads {
+  [key: string]: vscode.CommentThread[];
+}
+
+export interface ICachedCommentController {
+  [key: string]: vscode.CommentController;
 }

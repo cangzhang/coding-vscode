@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
 
-import { ISessionData, IDiffFileData } from 'src/typings/commonTypes';
-import { EmptyUserAvatar } from 'src/common/contants';
+import { ISessionData, IDiffFileData, ICachedCommentThreads } from 'src/typings/commonTypes';
+import { EmptyUserAvatar, MRUriScheme } from 'src/common/contants';
 import { CodingServer } from 'src/codingServer';
+import { IDiffComment, IMRData, IFileDiffParam, IDiffFile } from 'src/typings/respResult';
+import { getDiffLineNumber, isHunkLine } from 'src/common/utils';
 
 let commentIdx = 0;
 export class ReviewComment implements vscode.Comment {
@@ -53,6 +55,7 @@ export async function replyNote(
       line,
       path,
       position,
+      anchor: `diff-${diffFile.pathMD5}`,
     });
 
     const curUser = context.workspaceState.get<ISessionData>(`session`);
@@ -78,4 +81,49 @@ export async function replyNote(
 
     thread.comments = [...thread.comments, newComment];
   } catch (e) {}
+
+  return `${params.get('mr')}/${path}`;
 }
+
+export const makeCommentRangeProvider = (
+  codingSrv: CodingServer,
+  diffFileData: IDiffFileData,
+) => async (document: vscode.TextDocument, token: vscode.CancellationToken) => {
+  if (document.uri.scheme !== MRUriScheme) {
+    return [];
+  }
+
+  try {
+    const params = new URLSearchParams(decodeURIComponent(document.uri.query));
+    const mrId = params.get('id') || ``;
+    let param: IFileDiffParam = {
+      path: params.get('path') ?? ``,
+      base: params.get('leftSha') ?? ``,
+      compare: params.get('rightSha') ?? ``,
+      mergeRequestId: mrId ?? ``,
+    };
+    const fileIdent = `${params.get(`mr`)}/${params.get(`path`)}`;
+
+    const { data } = await codingSrv.fetchFileDiffs(param);
+    diffFileData[fileIdent] = data;
+    const { diffLines } = data;
+
+    const ret = diffLines.reduce((result, i) => {
+      const isHunk = isHunkLine(i.text);
+      if (!isHunk) {
+        return result;
+      }
+
+      const [left, right] = getDiffLineNumber(i.text);
+      const [start, end] = params.get('right') === `true` ? right : left;
+      if (start > 0) {
+        result.push(new vscode.Range(start - 1, 0, end, 0));
+      }
+      return result;
+    }, [] as vscode.Range[]);
+    return ret;
+  } catch (e) {
+    console.error('fetch diff lines failed.');
+    return [];
+  }
+};
