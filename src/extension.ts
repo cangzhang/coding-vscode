@@ -60,7 +60,7 @@ export async function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(commentController);
 
-  const commentResolveData: { [key: string]: boolean } = {};
+  const commentThreads: { [key: string]: vscode.CommentThread[] } = {};
   const diffFileData: { [key: string]: IDiffFile } = {};
 
   commentController.commentingRangeProvider = {
@@ -268,10 +268,9 @@ export async function activate(context: vscode.ExtensionContext) {
           { preserveFocus: true },
         );
 
-        const identifier = `${mr.iid}/${file.path}`;
-        if (commentResolveData[identifier]) {
-          return;
-        }
+        commentThreads[mr.iid]?.forEach((c) => {
+          c.dispose();
+        });
 
         try {
           const commentResp = await codingSrv.getMRComments(mr.iid);
@@ -307,14 +306,17 @@ export async function activate(context: vscode.ExtensionContext) {
 
               return comment;
             });
+
             const commentThread = commentController.createCommentThread(
               isRight ? headUri : parentUri,
               range,
-              commentList,
+              [],
             );
+            commentThread.comments = commentList;
             commentThread.collapsibleState = vscode.CommentThreadCollapsibleState.Expanded;
+
+            commentThreads[mr.iid] = (commentThreads[mr.iid] ?? []).concat(commentThread);
           });
-          commentResolveData[identifier] = true;
         } finally {
         }
       },
@@ -325,7 +327,7 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(
       `codingPlugin.diff.createComment`,
       async (reply: vscode.CommentReply) => {
-        replyNote(reply, context);
+        replyNote(reply, context, codingSrv, diffFileData);
       },
     ),
   );
@@ -333,37 +335,7 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(
       `codingPlugin.diff.replyComment`,
       async (reply: vscode.CommentReply) => {
-        const params = new URLSearchParams(decodeURIComponent(reply.thread.uri.query));
-        const isRight = params.get('right') === `true`;
-        const ident = `${params.get(`mr`)}/${params.get(`path`)}`;
-        const diffFile = diffFileData[ident];
-
-        const noteable_id = params.get('id') ?? ``; // mr index id
-        const commitId = isRight ? params.get('rightSha') : params.get('leftSha');
-        const content = reply.text;
-        const noteable_type = `MergeRequestBean`;
-        const change_type = isRight ? 1 : 2;
-        const line = reply.thread.range.start.line + 1;
-        const path = encodeURIComponent(params.get(`path`) || ``);
-        const targetPos = diffFile.diffLines.find((i) => {
-          return i[isRight ? `rightNo` : `leftNo`] === line;
-        });
-        const position = targetPos?.index ?? 0;
-
-        try {
-          const resp = await codingSrv.postLineNote({
-            noteable_id,
-            commitId: commitId ?? ``,
-            content,
-            noteable_type,
-            change_type,
-            line,
-            path,
-            position,
-          });
-
-          replyNote(reply, context);
-        } catch (e) {}
+        replyNote(reply, context, codingSrv, diffFileData);
       },
     ),
   );

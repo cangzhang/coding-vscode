@@ -1,4 +1,4 @@
-import { IMRDetail, IMRStatusItem, IUserItem } from './respResult';
+import { IDiffFile, IMRDetail, IMRStatusItem, IUserItem } from './respResult';
 
 export interface IRepoInfo {
   team: string;
@@ -40,4 +40,8 @@ export interface IMRWebViewDetail {
     commit_statuses: IMRStatusItem[];
   };
   user: IUserItem;
+}
+
+export interface IDiffFileData {
+  [key: string]: IDiffFile;
 }
