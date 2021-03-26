@@ -9,13 +9,7 @@ import { ReleaseTreeDataProvider } from 'src/tree/releaseTree';
 import { IRepoInfo, IMRWebViewDetail, ISessionData } from 'src/typings/commonTypes';
 import { GitService } from 'src/common/gitService';
 import { MRUriScheme } from 'src/common/contants';
-import {
-  IDiffComment,
-  IMRData,
-  IFileDiffParam,
-  IFileDiffResp,
-  IDiffFile,
-} from 'src/typings/respResult';
+import { IDiffComment, IMRData, IFileDiffParam, IDiffFile } from 'src/typings/respResult';
 import { replyNote, ReviewComment } from './reviewCommentController';
 import { getDiffLineNumber, isHunkLine } from 'src/common/utils';
 
@@ -269,18 +263,26 @@ export async function activate(context: vscode.ExtensionContext) {
         );
 
         commentThreads[mr.iid]?.forEach((c) => {
-          c.dispose();
+          c?.dispose();
         });
 
         try {
           const commentResp = await codingSrv.getMRComments(mr.iid);
 
-          const validComments = (commentResp.data as IDiffComment[][]).filter((i) => {
-            const first = i[0];
-            return !first.outdated && first.path === file.path;
-          }, []);
+          const validComments = (commentResp.data as IDiffComment[][])
+            .filter((i) => {
+              const first = i[0];
+              return !first.outdated && first.path === file.path;
+            }, [])
+            .reduce((ret, i) => {
+              const ident = `${i[0].change_type === 1 ? 'right' : 'left'}-${i[0].position}-${
+                i[0].line
+              }`;
+              ret[ident] = (ret[ident] ?? []).concat(i);
+              return ret;
+            }, {} as { [key: string]: IDiffComment[] });
 
-          validComments.forEach((i) => {
+          Object.values(validComments).forEach((i) => {
             const root = i[0];
             const isLeft = root.change_type === 2;
             const isRight = root.change_type === 1;
