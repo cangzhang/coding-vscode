@@ -104,12 +104,12 @@
         {
           "command": "codingPlugin.diff.createComment",
           "group": "inline",
-          "when": "commentController == mrDiffComment && commentThreadIsEmpty"
+          "when": "commentThreadIsEmpty"
         },
         {
           "command": "codingPlugin.diff.replyComment",
           "group": "inline",
-          "when": "commentController == mrDiffComment && !commentThreadIsEmpty"
+          "when": "!commentThreadIsEmpty"
         }
       ],
       "comments/comment/title": [

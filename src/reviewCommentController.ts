@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 
-import { ISessionData, IDiffFileData, ICachedCommentThreads } from 'src/typings/commonTypes';
+import { ISessionData, IDiffFileData } from 'src/typings/commonTypes';
 import { EmptyUserAvatar, MRUriScheme } from 'src/common/contants';
 import { CodingServer } from 'src/codingServer';
-import { IDiffComment, IMRData, IFileDiffParam, IDiffFile } from 'src/typings/respResult';
+import { IFileDiffParam } from 'src/typings/respResult';
 import { getDiffLineNumber, isHunkLine } from 'src/common/utils';
 
 let commentIdx = 0;

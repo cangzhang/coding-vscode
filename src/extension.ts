@@ -15,9 +15,8 @@ import {
 } from 'src/typings/commonTypes';
 import { GitService } from 'src/common/gitService';
 import { MRUriScheme } from 'src/common/contants';
-import { IDiffComment, IMRData, IFileDiffParam, IDiffFile } from 'src/typings/respResult';
+import { IDiffComment, IMRData, IDiffFile } from 'src/typings/respResult';
 import { replyNote, ReviewComment, makeCommentRangeProvider } from 'src/reviewCommentController';
-import { getDiffLineNumber, isHunkLine } from 'src/common/utils';
 
 export async function activate(context: vscode.ExtensionContext) {
   await GitService.init();
@@ -226,7 +225,6 @@ export async function activate(context: vscode.ExtensionContext) {
         );
 
         const cacheId = `${mr.iid}/${file.path}`;
-        // cachedCommentControllers[cacheId]?.dispose();
         cachedCommentThreads[cacheId]?.forEach((c) => {
           c?.dispose();
         });
