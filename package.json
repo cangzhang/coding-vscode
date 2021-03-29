@@ -2,7 +2,7 @@
   "name": "coding-plugin",
   "displayName": "CODING Merge Requests & Releases",
   "description": "CODING plugin for VS Code.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "publisher": "coding-net",
   "license": "MIT",
   "engines": {
